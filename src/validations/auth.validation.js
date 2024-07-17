@@ -4,8 +4,18 @@ const { password } = require('./custom.validation');
 const register = {
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    password: Joi.string().required().custom(password),
-    name: Joi.string().required(),
+    confirmEmail: Joi.string().required().valid(Joi.ref('email')).error(new Error('Emails must match')),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    address: Joi.string().required(),
+    city: Joi.string().required(),
+    number: Joi.number().required(),
+    zipcode: Joi.string().required(),
+    policy: Joi.array().items({
+      id: Joi.string().required(),
+      name: Joi.string().required(),
+    }),
+    password: Joi.string().required(),
   }),
 };
 

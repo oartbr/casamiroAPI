@@ -4,8 +4,17 @@ const { password, objectId } = require('./custom.validation');
 const createUser = {
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    password: Joi.string().required().custom(password),
-    name: Joi.string().required(),
+    confirmEmail: Joi.string().required().valid(Joi.ref('email')).error(new Error('Emails must match')),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    address: Joi.string().required(),
+    city: Joi.string().required(),
+    zipcode: Joi.string().required(),
+    policy: Joi.array().items({
+      id: Joi.string().required(),
+      name: Joi.string().required(),
+    }),
+    password: Joi.string().required(),
     role: Joi.string().required().valid('user', 'admin'),
   }),
 };
