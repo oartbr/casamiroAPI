@@ -10,14 +10,14 @@ const sendCodeWhatsApp = catchAsync(async (req, res) => {
   const oCode = new CodeGenerator(5, 'number');
   const response = await sendMessage(req.body.phoneNumber, oCode.code, req.body.garantiaId).then((message) => {
     // res.status(httpStatus.CREATED).send(aGarantias.collection);
-    console.log(message);
-    res.status(httpStatus.CREATED).send({ response: message });
+    // console.log(req.body.phoneNumber);
+    res.status(httpStatus.ACCEPTED).send({ success: `Code sent to ${req.body.phoneNumber}.` });
   });
 });
 
 const confirmCode = catchAsync(async (req, res) => {
-  const response = await confirmWhatsCode(req.body.phoneNumber, req.body.code, req.body.garantiaId );
-  (response) ? res.status(httpStatus.ACCEPTED).send({phoneNumber: req.body.phoneNumber, garantiaId: req.body.garantiaId, confirmation: true}) : res.send({ response: 'Code does not match', confirmation: false });
+  const response = await confirmWhatsCode(req.body.code, req.body.garantiaId );
+  (response) ? res.status(httpStatus.ACCEPTED).send({garantiaId: req.body.garantiaId, confirmation: true}) : res.send({ response: 'Code does not match', confirmation: false });
 });
 
 module.exports = {

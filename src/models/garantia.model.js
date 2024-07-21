@@ -1,9 +1,15 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
+const ApiError = require('../utils/ApiError');
+const httpStatus = require('http-status');
 
 const garantiaSchema = mongoose.Schema(
   {
+    garantiaId: {
+      type: String,
+      required: true,
+    },
     brand: {
       type: String,
       trim: true,
@@ -11,10 +17,6 @@ const garantiaSchema = mongoose.Schema(
     builtOn: {
       type: String,
       trim: true,
-    },
-    garantiaId: {
-      type: String,
-      required: true,
     },
     description: {
       type: String,
@@ -26,22 +28,29 @@ const garantiaSchema = mongoose.Schema(
     },
     reseller: {
       type: String,
-      required: false,
       trim: true,
     },
     shippedDate: {
       type: Date,
-      required: false,
     },
     soldTo: {
       type: String,
-      required: false,
       trim: true,
     },
     soldDate: {
       type: Date,
-      required: false,
     },
+    clientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Client',
+    },
+    status:{
+      type: String,
+      required: true,
+      trim: true,
+      enum: ['created', 'assigned', 'shipped', 'delivered', 'cancelled', 'sold', 'registered'],
+      default: 'created',
+    }
   },
   {
     timestamps: true,
@@ -58,8 +67,23 @@ garantiaSchema.plugin(paginate);
  * @returns {Promise<boolean>}
  */
 garantiaSchema.statics.isGarantiaTaken = async function (garantiaId) {
-  const garantia = await this.findOne(garantiaId);
+  const garantia = await this.findOne({garantiaId});
+
   return !!garantia;
+};
+
+/**
+ * Get Garantia by garantiaId
+ * @param {string} garantiaId - The garantia id
+ * @returns {Promise<boolean>}
+ */
+garantiaSchema.statics.getGarantiaById = async function (garantiaId) {
+  const garantia = await this.findOne({garantiaId});
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
+  }
+
+  return garantia;
 };
 
 /**

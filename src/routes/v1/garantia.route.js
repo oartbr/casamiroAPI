@@ -12,6 +12,8 @@ const router = express.Router();
 router.get('/:garantiaId', validate(garantiaValidation.getGarantia), garantiaController.getGarantia);
 router.post('/create', validate(garantiaValidation.create), garantiaController.create);
 router.get('/getAvailable', validate(garantiaValidation.getAvailable), garantiaController.getAvailable);
+router.post('/assign', validate(garantiaValidation.assign), garantiaController.assign);
+router.post('/register', validate(garantiaValidation.register), garantiaController.register);
 
 module.exports = router;
 

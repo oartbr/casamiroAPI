@@ -1,5 +1,7 @@
 const httpStatus = require('http-status');
 const { Garantia } = require('../models');
+const { CheckPhoneNumber } = require('../models');
+const { Client } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -8,10 +10,49 @@ const ApiError = require('../utils/ApiError');
  * @returns {Promise<Garantia>}
  */
 const create = async (garantiaId) => {
-  if (await Garantia.isGarantiaTaken(garantiaId)) {
+  if (await Garantia.isGarantiaTaken(garantiaId.garantiaId)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Garantia already exists.');
   }
-  return Garantia.create(garantiaId);
+
+  const newGarantia = await Garantia.create(garantiaId);
+
+  if (newGarantia === null) {
+    return false;
+  }
+  return newGarantia;
+};
+
+/**
+ * Assign garantia - this updates the garantia with the details of the actual product
+ * @param {ObjectId} garantiaId
+ * @param {String} brand
+ * @param {string} description
+ * @param {string} sku
+ * @returns {Promise<garantia>}
+ */
+const assign = async (assignObj) => {
+  const garantia = await Garantia.findOne({ garantiaId: assignObj.garantiaId });
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
+  } else {
+    garantia.brand = assignObj.brand;
+    garantia.description = assignObj.description;
+    garantia.sku = assignObj.sku;
+    garantia.status = 'assigned';
+    await garantia.save();
+  }
+
+  return garantia;
+};
+
+/**
+ * Query for garantia
+ * @param {Object} filter - Mongo filter
+ * @returns {Promise<QueryResult>}
+ */
+const getGarantiaById = async (garantiaId) => {
+  const garantia = await Garantia.getGarantiaById(garantiaId);
+  return garantia;
 };
 
 /**
@@ -29,24 +70,13 @@ const queryGarantias = async (filter, options) => {
 };
 
 /**
- * Get garantia by id
- * @param {ObjectId} id
- *  @param {Object} filter - Mongo filter
- * @returns {Promise<garantia>}
- */
-const getGarantiaById = async (id) => {
-  console.log({garantiaId: id });
-  return Garantia.findOne({garantiaId: id});
-};
-
-/**
  * Update garantia by id
  * @param {ObjectId} garantiaId
  * @param {Object} updateBody
  * @returns {Promise<Garantia>}
  */
 const updateGarantiaById = async (garantiaId, updateBody) => {
-  const garantia = await getGarantiaById(garantiaId);
+  const garantia = await Garantia.getGarantiaById(garantiaId);
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
   }
@@ -72,10 +102,40 @@ const deleteGarantiaById = async (garantiaId) => {
   return garantia;
 };
 
+/**
+ * Register garantia - this needs to register a new client and link it to the garantia
+ * @param {ObjectId} clientData
+ * @returns {Promise<garantia>}
+ */
+const register = async (clientData) => {
+  const garantia = await Garantia.getGarantiaById(clientData.garantiaId);
+  const checkPhoneNumber = await CheckPhoneNumber.getCheckById(clientData.garantiaId);
+  clientData.phoneNumber = checkPhoneNumber.phoneNumber;
+  clientData.checkPhoneNumber = checkPhoneNumber._id;
+
+  const client = await Client.getClientByEmail(clientData.email);
+  if (!client) {
+    const client = await Client.create(clientData);
+  }
+
+  if (client) {
+    garantia.status = 'registered';
+    garantia.clientId = client._id;
+    await garantia.save();
+  }
+  // console.log({garantia, checkPhoneNumber, client});
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
+  }
+  return garantia.populate('clientId').execPopulate();
+};
+
 module.exports = {
   create,
-  queryGarantias,
+  assign,
   getGarantiaById,
+  queryGarantias,
   updateGarantiaById,
   deleteGarantiaById,
+  register,
 };
