@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const { toJSON } = require('./plugins');
+const ApiError = require('../utils/ApiError');
+const httpStatus = require('http-status');
 
 const checkPhoneNumberSchema = mongoose.Schema(
   {
@@ -62,17 +64,31 @@ checkPhoneNumberSchema.statics.checkExists = async function (filter) {
 };
 
 /**
+ * Get checkPhoneNumber by garantiaId
+ * @param {string} garantiaId - garantiaId
+ * @returns {Promise<boolean>}
+ */
+checkPhoneNumberSchema.statics.getCheckById = async function (garantiaId) {
+  const check = await this.findOne({ garantiaId });
+  if (check === null) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Phone number hasn't been checked.`);
+  }
+  return check;
+};
+
+/**
  * Check if code matches the phoneNumber
  * @param {number} code - The code
- * @param {poneNumber} phoneNumber - phoneNumber
  * @param {garantiaId} garantiaId - garantiaId
  * @returns {Promise<boolean>}
  */
-checkPhoneNumberSchema.statics.confirmCode = async function (phoneNumber, code, garantiaId) {
-  const check = await this.findOne({phoneNumber, code, garantiaId});
-
-  if( check === null){
-    await this.findOne({garantiaId}).updateOne({$inc: {count: 1}});
+checkPhoneNumberSchema.statics.confirmCode = async function (code, garantiaId) {
+  console.log({code, garantiaId});
+  const check = await this.findOne({ code, garantiaId });
+  if (check === null) {
+    await this.findOne({ garantiaId }).updateOne({ $inc: { count: 1 } });
+  } else if (check.confirmed === true) {
+    return false;
   }
   return !!check;
 };

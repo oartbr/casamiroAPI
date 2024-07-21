@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const { toJSON } = require('./plugins');
 const { tokenTypes } = require('../config/tokens');
+const ApiError = require('../utils/ApiError');
+const httpStatus = require('http-status');
 
 const tokenSchema = mongoose.Schema(
   {

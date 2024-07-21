@@ -97,8 +97,34 @@ const deleteGarantia = {
   }),
 };
 
+const assign = {
+  body: Joi.object().keys({
+    garantiaId: Joi.string().required(),
+    brand: Joi.string().required(),
+    description: Joi.string().required(),
+    sku: Joi.string().required(),
+  }),
+};
+
+const register = {
+  body: Joi.object().keys({
+    garantiaId: Joi.string().required(),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    address: Joi.string().required(),
+    number: Joi.number(),
+    city: Joi.string().required(),
+    zipcode: Joi.string().required(),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
+    policy: Joi.array().required(),
+  }),
+};
+
+
 module.exports = {
   create,
+  assign,
   getAvailable,
   getGarantias,
   getGarantia,
@@ -107,4 +133,5 @@ module.exports = {
   sellGarantia,
   updateGarantia,
   deleteGarantia,
+  register,
 };

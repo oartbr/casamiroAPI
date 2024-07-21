@@ -8,24 +8,30 @@ const { CheckPhoneNumber } = require('../models');
 
 const messagingClient = new twilio(config.twilio.accountSid, config.twilio.authToken);
 
-const confirmWhatsCode = async (phoneNumber, code, garantiaId) => {
-  const checkConfirmed = await CheckPhoneNumber.checkExists({ garantiaId: garantiaId, confirmed: true });
-  if(checkConfirmed){
-    throw new ApiError(httpStatus.ACCEPTED, `Phone number was already confirmed.`);
-  }
-  const confirmPhoneNumberCode = await CheckPhoneNumber.confirmCode(phoneNumber, code, garantiaId);
-
+const confirmWhatsCode = async (code, garantiaId) => {
+  
+  
+  const confirmPhoneNumberCode = await CheckPhoneNumber.confirmCode(code, garantiaId);
+  
   if (!confirmPhoneNumberCode) {
-    const countFails = await CheckPhoneNumber.findOne({ garantiaId: garantiaId }).select('count');
-    if(countFails === null){
+    const countFails = await CheckPhoneNumber.findOne({ garantiaId });
+    if (countFails === null) {
       throw new ApiError(httpStatus.NOT_FOUND, `Code doesn't match, please request a new one.`);
+    } else if (countFails.confirmed === true) {
+      throw new ApiError(httpStatus.ALREADY_REPORTED, `This code was already confirmed, please request a new one.`);
     } else if (countFails.count > 3) {
-      await CheckPhoneNumber.deleteOne({ garantiaId: garantiaId });
+      await CheckPhoneNumber.deleteOne({ garantiaId });
       throw new ApiError(httpStatus.TOO_MANY_REQUESTS, `Code doesn't match, please request a new one.`);
+    } else {
+      throw new ApiError(httpStatus.PRECONDITION_REQUIRED, `Code doesn't match. ${countFails.count} failed attempts.`);
     }
-    throw new ApiError(httpStatus.PRECONDITION_REQUIRED, `Code doesn't match. ${countFails.count} failed attempts.`);
   } else {
-    const countFails = await CheckPhoneNumber.findOne({ phoneNumber: phoneNumber, garantiaId: garantiaId }, { $set: { confirmed: true } }, { upsert: true });
+    
+    const success = await CheckPhoneNumber.findOneAndUpdate(
+      { code, garantiaId },
+      { $set: { confirmed: true } },
+      { upsert: true }
+    );
   }
 
   return true;
@@ -33,7 +39,8 @@ const confirmWhatsCode = async (phoneNumber, code, garantiaId) => {
 
 const sendMessage = async (phoneNumber, message, garantiaId) => {
   const toPhoneNumber = `whatsapp:${phoneNumber}`;
-  const garantiaExists = await Garantia.isGarantiaTaken({ garantiaId });
+
+  const garantiaExists = await Garantia.isGarantiaTaken(garantiaId);
   const checkExists = await CheckPhoneNumber.checkExists({ garantiaId });
 
   if (!checkExists) {
@@ -44,11 +51,15 @@ const sendMessage = async (phoneNumber, message, garantiaId) => {
       count: 0,
     });
   } else {
-    const checkPhoneMess = await CheckPhoneNumber.updateOne({ garantiaId: garantiaId }, { $set: { code: message } }, { upsert: true });
+    const checkPhoneMess = await CheckPhoneNumber.updateOne(
+      { garantiaId },
+      { $set: { code: message, confirmed: false, count: 0 } },
+      { upsert: true }
+    );
   }
 
   if (!garantiaExists) {
-    throw new ApiError(httpStatus.BAD_REQUEST, `Garantia doesn't exist.`);
+    throw new ApiError(httpStatus.NOT_FOUND, `Garantia doesn't exist.`);
   }
 
   try {
@@ -58,12 +69,10 @@ const sendMessage = async (phoneNumber, message, garantiaId) => {
         from: config.twilio.phoneNumber,
         to: toPhoneNumber,
       })
-      .then((mess) => {
-        
-      });
+      .then((mess) => {});
     return response;
   } catch (error) {
-    throw new Error(`Failed to send Message: ${error.message}`);
+    throw new ApiError(httpStatus.BAD_REQUEST, `Failed to send Message: ${error.message}`);
   }
   return true;
 };

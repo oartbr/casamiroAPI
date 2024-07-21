@@ -11,7 +11,6 @@ const sendCodeWhatsApp = {
 const confirmCode = {
   body: Joi.object().keys({
     code: Joi.number(),
-    phoneNumber: Joi.string(),
     garantiaId: Joi.string(),
   }),
 };
