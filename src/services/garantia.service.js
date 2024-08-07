@@ -1,7 +1,7 @@
 const httpStatus = require('http-status');
 const { Garantia } = require('../models');
 const { CheckPhoneNumber } = require('../models');
-const { Client } = require('../models');
+const { User } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -56,6 +56,34 @@ const getGarantiaById = async (garantiaId) => {
 };
 
 /**
+ * Query for garantia by userId
+ * @param {Object} userId
+ * @returns {Promise<QueryResult>}
+ */
+const getGarantiasByUserId = async (userId) => {
+  const garantias = await Garantia.getGarantiasByUserId(userId);
+  return garantias;
+};
+
+/**
+ * Query for user
+ * @param {Object} filter - Mongo filter
+ * @returns {Promise<User>}
+ */
+const getUserByGarantiaId = async (garantiaId) => {
+  const { phoneNumber, confirmed } = await CheckPhoneNumber.getCheckById(garantiaId);
+
+  // console.log({ phoneNumber, confirmed });
+
+  if (confirmed === true && phoneNumber !== null) {
+    const user = await User.getUserByPhoneNumber(phoneNumber);
+    return user;
+  }
+
+  return false;
+};
+
+/**
  * Query for garantias
  * @param {Object} filter - Mongo filter
  * @param {Object} options - Query options
@@ -103,31 +131,32 @@ const deleteGarantiaById = async (garantiaId) => {
 };
 
 /**
- * Register garantia - this needs to register a new client and link it to the garantia
- * @param {ObjectId} clientData
+ * Register garantia - this needs to register a new user and link it to the garantia
+ * @param {ObjectId} userData
  * @returns {Promise<garantia>}
  */
-const register = async (clientData) => {
-  const garantia = await Garantia.getGarantiaById(clientData.garantiaId);
-  const checkPhoneNumber = await CheckPhoneNumber.getCheckById(clientData.garantiaId);
-  clientData.phoneNumber = checkPhoneNumber.phoneNumber;
-  clientData.checkPhoneNumber = checkPhoneNumber._id;
+const register = async (userData) => {
+  const garantia = await Garantia.getGarantiaById(userData.garantiaId);
+  const checkPhoneNumber = await CheckPhoneNumber.getCheckById(userData.garantiaId);
+  userData.phoneNumber = checkPhoneNumber.phoneNumber;
+  userData.checkPhoneNumber = checkPhoneNumber._id;
 
-  const client = await Client.getClientByEmail(clientData.email);
-  if (!client) {
-    const client = await Client.create(clientData);
+  const user = await User.getUserByEmail(userData.email);
+  if (!user) {
+    const user = await User.create(userData);
   }
 
-  if (client) {
+  if (user) {
     garantia.status = 'registered';
-    garantia.clientId = client._id;
+    garantia.userId = user._id;
+    garantia.registeredAt = Date.now();
     await garantia.save();
   }
-  // console.log({garantia, checkPhoneNumber, client});
+  // console.log({garantia, checkPhoneNumber, user});
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
   }
-  return garantia.populate('clientId').execPopulate();
+  return garantia.populate('usertId').execPopulate();
 };
 
 module.exports = {
@@ -137,5 +166,7 @@ module.exports = {
   queryGarantias,
   updateGarantiaById,
   deleteGarantiaById,
+  getUserByGarantiaId,
+  getGarantiasByUserId,
   register,
 };

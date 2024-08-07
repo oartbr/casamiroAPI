@@ -74,6 +74,13 @@ const generateAuthTokens = async (user) => {
   await saveToken(refreshToken, user.id, refreshTokenExpires, tokenTypes.REFRESH);
 
   return {
+    token: accessToken,
+    refreshToken: refreshToken,
+    tokenExpires: accessTokenExpires.toDate(),
+  };
+
+  /*
+  return {
     access: {
       token: accessToken,
       expires: accessTokenExpires.toDate(),
@@ -82,7 +89,7 @@ const generateAuthTokens = async (user) => {
       token: refreshToken,
       expires: refreshTokenExpires.toDate(),
     },
-  };
+  }; */
 };
 
 /**
@@ -112,6 +119,8 @@ const generateVerifyEmailToken = async (user) => {
   await saveToken(verifyEmailToken, user.id, expires, tokenTypes.VERIFY_EMAIL);
   return verifyEmailToken;
 };
+
+
 
 module.exports = {
   generateToken,

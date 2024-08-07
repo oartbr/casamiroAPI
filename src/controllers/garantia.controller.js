@@ -64,19 +64,25 @@ const assign = catchAsync(async (req, res) => {
   res.status(httpStatus.ACCEPTED).send(assignAction);
 });
 
-const OLDregister = catchAsync(async (req, res) => {
-  const garantia = await garantiaService.getGarantiaById(req.body.garantiaId);
-  const checkPhoneNumber = await checkPhoneNumberService.getCheckById(req.body.garantiaId);
-  if (!garantia) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
-  } else if (garantia.status === 'registered') {
-    throw new ApiError(httpStatus.LOCKED, 'Garantia already registered');
-  } else if (!checkPhoneNumber || !checkPhoneNumber.confirmed) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Phone number is not registered');
+const getUser = catchAsync(async (req, res) => {
+  const user = await garantiaService.getUserByGarantiaId(req.params.garantiaId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-  // todo: check if garantia is already registered
-  console.log({ req: req.body, garantia, checkPhoneNumber });
-  res.send({ req: req.body, garantia, checkPhoneNumber });
+  res.send(user);
+});
+
+const getList = catchAsync(async (req, res) => {
+  const user = await garantiaService.getUserByGarantiaId(req.params.garantiaId);
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const garantias = await garantiaService.getGarantiasByUserId(user._id);
+
+  res.send(garantias);
 });
 
 const register = catchAsync(async (req, res) => {
@@ -103,5 +109,7 @@ module.exports = {
   getGarantias,
   updateGarantia,
   deleteGarantia,
+  getUser,
+  getList,
   register,
 };
