@@ -2,12 +2,22 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
-const { roles } = require('../config/roles');
+const { roles, enumRoles } = require('../config/roles');
 const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
 
 const userSchema = mongoose.Schema(
   {
+    checkPhoneNumber: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'CheckPhoneNumber',
+      // to-do: make this required: true,
+    },
+    phoneNumber: {
+      type: Number,
+      // to-do: make this required: true,
+      trim: true,
+    },
     firstName: {
       type: String,
       required: true,
@@ -20,22 +30,18 @@ const userSchema = mongoose.Schema(
     },
     address: {
       type: String,
-      required: true,
       trim: false,
     },
     number: {
       type: String,
-      required: true,
       trim: true,
     },
     city: {
       type: String,
-      required: true,
       trim: true,
     },
     zipcode: {
       type: String,
-      required: true,
       trim: true,
     },
     email: {
@@ -63,12 +69,26 @@ const userSchema = mongoose.Schema(
       private: true, // used by the toJSON plugin
     },
     role: {
-      type: String,
-      enum: roles,
-      default: 'user',
+      type: {
+        id: {
+          type: Number,
+          required: true,
+        },
+        name: {
+          type: String,
+        },
+      },
+      default: {
+        id: 2,
+        name: 'USER',
+      },
     },
     isEmailVerified: {
       type: Boolean,
+      default: false,
+    },
+    policy: {
+      type: Object,
       default: false,
     },
   },
@@ -90,6 +110,34 @@ userSchema.plugin(paginate);
 userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
   const user = await this.findOne({ email, _id: { $ne: excludeUserId } });
   return !!user;
+};
+
+/**
+ * Get if email is taken
+ * @param {string} email - The user's email
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.getUserByEmail = async function (email) {
+  const user = await this.findOne({ email });
+
+  if (user === null) {
+    return false;
+  }
+  return user;
+};
+
+/**
+ * Get user by phoneNumber
+ * @param {string} phoneNumber - The user's phoneNumber
+ * @returns {Promise<User>}
+ */
+userSchema.statics.getUserByPhoneNumber = async function (phoneNumber) {
+  const user = await this.findOne({ phoneNumber }).select('-policy -password -checkPhoneNumber');
+  // console.log({ phoneNumber });
+  if (user === null) {
+    return null;
+  }
+  return user;
 };
 
 /**

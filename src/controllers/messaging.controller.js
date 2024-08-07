@@ -2,27 +2,40 @@ const httpStatus = require('http-status');
 const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { sendMessage, confirmWhatsCode } = require('../services/messaging.service');
+const { sendMessage, confirmWhatsCode, sendMessageLogin, confirmWhatsCodeLogin } = require('../services/messaging.service');
 const { createCheck } = require('../services/checkPhoneNumber.service');
 const CodeGenerator = require('../utils/generator');
 
 const sendCodeWhatsApp = catchAsync(async (req, res) => {
   const oCode = new CodeGenerator(5, 'number');
-  const response = await sendMessage(req.body.phoneNumber, oCode.code, req.body.garantiaId).then((message) => {
+  const response = await sendMessage(req.body.phoneNumber, oCode.code, req.body.garantiaId || "pending").then((message) => {
     // res.status(httpStatus.CREATED).send(aGarantias.collection);
     // console.log(req.body.phoneNumber);
     res.status(httpStatus.ACCEPTED).send({ success: `Code sent to ${req.body.phoneNumber}.` });
   });
 });
 
-const confirmCode = catchAsync(async (req, res) => {
+const sendWhats = catchAsync(async (req, res) => {
+  const oCode = new CodeGenerator(5, 'number');
+  const response = await sendMessageLogin(req.body.phoneNumber, oCode.code).then((message) => {
+    res.status(httpStatus.ACCEPTED).send({ success: `Code sent to ${req.body.phoneNumber}.` });
+  });
+});
+
+const confirmCodeOLD = catchAsync(async (req, res) => {
   const response = await confirmWhatsCode(req.body.code, req.body.garantiaId );
   (response) ? res.status(httpStatus.ACCEPTED).send({garantiaId: req.body.garantiaId, confirmation: true}) : res.send({ response: 'Code does not match', confirmation: false });
+});
+
+const confirmCode = catchAsync(async (req, res) => {
+  const response = await confirmWhatsCodeLogin(req.body.code, req.body.phoneNumber);
+  (response.confirmed) ? res.status(httpStatus.ACCEPTED).send({phoneNumber: response.phoneNumber, confirmation: true, user: response.user}) : res.send({ response: 'Code does not match', confirmation: false });
 });
 
 module.exports = {
   sendCodeWhatsApp,
   confirmCode,
+  sendWhats,
 };
 
 /* example:

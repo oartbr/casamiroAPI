@@ -13,7 +13,7 @@ const clientSchema = mongoose.Schema(
       // to-do: make this required: true,
     },
     phoneNumber: {
-      type: String,
+      type: Number,
       // to-do: make this required: true,
       trim: true,
     },
@@ -103,6 +103,34 @@ clientSchema.statics.getClientByEmail = async function (email) {
 
   if (client === null) {
     return false;
+  }
+  return client;
+};
+
+/**
+ * Get client by Id
+ * @param {string} clientId - The client's id
+ * @returns {Promise<Client>}
+ */
+clientSchema.statics.getClientById = async function (clientId) {
+  const client = await this.findOne({ _id: clientId }).select('-policy -password -checkPhoneNumber');
+
+  if (client === null) {
+    return null;
+  }
+  return client;
+};
+
+/**
+ * Get client by phoneNumber
+ * @param {string} clientId - The client's phoneNumber
+ * @returns {Promise<Client>}
+ */
+clientSchema.statics.getClientByPhoneNumber = async function (phoneNumber) {
+  const client = await this.findOne({ phoneNumber }).select('-policy -password -checkPhoneNumber');
+  console.log({ phoneNumber });
+  if (client === null) {
+    return null;
   }
   return client;
 };

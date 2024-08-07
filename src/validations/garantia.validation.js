@@ -106,6 +106,18 @@ const assign = {
   }),
 };
 
+const getUser = {
+  params: Joi.object().keys({
+    garantiaId: Joi.string(),
+  }),
+};
+
+const getList = {
+  params: Joi.object().keys({
+    garantiaId: Joi.string(),
+  }),
+};
+
 const register = {
   body: Joi.object().keys({
     garantiaId: Joi.string().required(),
@@ -133,5 +145,7 @@ module.exports = {
   sellGarantia,
   updateGarantia,
   deleteGarantia,
+  getUser,
+  getList,
   register,
 };

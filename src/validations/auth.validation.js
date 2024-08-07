@@ -4,13 +4,12 @@ const { password } = require('./custom.validation');
 const register = {
   body: Joi.object().keys({
     email: Joi.string().required().email(),
-    confirmEmail: Joi.string().required().valid(Joi.ref('email')).error(new Error('Emails must match')),
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
-    address: Joi.string().required(),
-    city: Joi.string().required(),
-    number: Joi.number().required(),
-    zipcode: Joi.string().required(),
+    address: Joi.string(),
+    city: Joi.string(),
+    number: Joi.number(),
+    zipcode: Joi.string(),
     policy: Joi.array().items({
       id: Joi.string().required(),
       name: Joi.string().required(),
@@ -59,6 +58,12 @@ const verifyEmail = {
   }),
 };
 
+const getMe = {
+  query: Joi.object().keys({
+    // token: Joi.string().required(),
+  }),
+};
+
 module.exports = {
   register,
   login,
@@ -67,4 +72,5 @@ module.exports = {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  getMe,
 };

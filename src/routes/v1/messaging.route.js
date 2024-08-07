@@ -7,6 +7,7 @@ const messagingController = require('../../controllers/messaging.controller');
 const router = express.Router();
 
 router.post('/sendCode', validate(messagingValidation.sendCodeWhatsApp), messagingController.sendCodeWhatsApp);
+router.post('/codeLogin', validate(messagingValidation.sendCodeWhatsApp), messagingController.sendWhats);
 router.post('/confirmCode', validate(messagingValidation.confirmCode), messagingController.confirmCode);
 
 module.exports = router;

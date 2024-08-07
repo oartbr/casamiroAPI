@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const httpStatus = require('http-status');
 const { toJSON, paginate } = require('./plugins');
 const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
 
 const garantiaSchema = mongoose.Schema(
   {
@@ -37,20 +37,20 @@ const garantiaSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
-    soldDate: {
+    registeredAt: {
       type: Date,
     },
-    clientId: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Client',
+      ref: 'User',
     },
-    status:{
+    status: {
       type: String,
       required: true,
       trim: true,
       enum: ['created', 'assigned', 'shipped', 'delivered', 'cancelled', 'sold', 'registered'],
       default: 'created',
-    }
+    },
   },
   {
     timestamps: true,
@@ -67,7 +67,7 @@ garantiaSchema.plugin(paginate);
  * @returns {Promise<boolean>}
  */
 garantiaSchema.statics.isGarantiaTaken = async function (garantiaId) {
-  const garantia = await this.findOne({garantiaId});
+  const garantia = await this.findOne({ garantiaId });
 
   return !!garantia;
 };
@@ -78,12 +78,26 @@ garantiaSchema.statics.isGarantiaTaken = async function (garantiaId) {
  * @returns {Promise<boolean>}
  */
 garantiaSchema.statics.getGarantiaById = async function (garantiaId) {
-  const garantia = await this.findOne({garantiaId});
+  const garantia = await this.findOne({ garantiaId });
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   }
 
   return garantia;
+};
+
+/**
+ * Get Garantia by userId
+ * @param {string} userId - The user id
+ * @returns {Promise<boolean>}
+ */
+garantiaSchema.statics.getGarantiasByUserId = async function (userId) {
+  const garantias = await this.find({ userId });
+  if (!garantias) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Garantias not found for this user');
+  }
+
+  return garantias;
 };
 
 /**

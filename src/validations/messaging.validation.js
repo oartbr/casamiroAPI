@@ -3,15 +3,14 @@ const { objectId } = require('./custom.validation');
 
 const sendCodeWhatsApp = {
   body: Joi.object().keys({
-    phoneNumber: Joi.string(),
-    garantiaId: Joi.string(),
+    phoneNumber: Joi.string()
   }),
 };
 
 const confirmCode = {
   body: Joi.object().keys({
     code: Joi.number(),
-    garantiaId: Joi.string(),
+    phoneNumber: Joi.string(),
   }),
 };
 

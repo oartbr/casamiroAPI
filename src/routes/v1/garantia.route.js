@@ -14,6 +14,8 @@ router.post('/create', validate(garantiaValidation.create), garantiaController.c
 router.get('/getAvailable', validate(garantiaValidation.getAvailable), garantiaController.getAvailable);
 router.post('/assign', validate(garantiaValidation.assign), garantiaController.assign);
 router.post('/register', validate(garantiaValidation.register), garantiaController.register);
+router.get('/getList/:garantiaId', validate(garantiaValidation.getList), garantiaController.getList);
+router.get('/getUser/:garantiaId', validate(garantiaValidation.getUser), garantiaController.getUser);
 
 module.exports = router;
 

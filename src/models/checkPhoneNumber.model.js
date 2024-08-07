@@ -7,9 +7,7 @@ const checkPhoneNumberSchema = mongoose.Schema(
   {
     garantiaId: {
       type: String,
-      required: true,
-      index: true,
-      unique: true,
+      default: "pending",
     },
     confirmed: {
       type: Boolean,
@@ -32,6 +30,8 @@ const checkPhoneNumberSchema = mongoose.Schema(
     },
     phoneNumber: {
       type: Number,
+      required: true,
+      unique: true,
       default: false,
     },
   },
@@ -87,6 +87,22 @@ checkPhoneNumberSchema.statics.confirmCode = async function (code, garantiaId) {
   const check = await this.findOne({ code, garantiaId });
   if (check === null) {
     await this.findOne({ garantiaId }).updateOne({ $inc: { count: 1 } });
+  } else if (check.confirmed === true) {
+    return false;
+  }
+  return !!check;
+};
+
+/**
+ * Check if code matches the phoneNumber
+ * @param {number} code - The code
+ * @param {garantiaId} garantiaId - garantiaId
+ * @returns {Promise<boolean>}
+ */
+checkPhoneNumberSchema.statics.confirmCodeLogin = async function (code, phoneNumber) {
+  const check = await this.findOne({ code, phoneNumber });
+  if (check === null) {
+    await this.findOne({ phoneNumber }).updateOne({ $inc: { count: 1 } });
   } else if (check.confirmed === true) {
     return false;
   }
