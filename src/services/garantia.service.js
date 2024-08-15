@@ -39,6 +39,8 @@ const assign = async (assignObj) => {
     garantia.description = assignObj.description;
     garantia.sku = assignObj.sku;
     garantia.status = 'assigned';
+    garantia.assignedAt = Date.now();
+
     await garantia.save();
   }
 
@@ -52,6 +54,7 @@ const assign = async (assignObj) => {
  */
 const getGarantiaById = async (garantiaId) => {
   const garantia = await Garantia.getGarantiaById(garantiaId);
+  //console.log({garantiaTESTE: garantia});
   return garantia;
 };
 
@@ -111,6 +114,7 @@ const updateGarantiaById = async (garantiaId, updateBody) => {
   if (updateBody.email && (await garantia.isEmailTaken(updateBody.email, garantiaId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
   }
+
   Object.assign(garantia, updateBody);
   await garantia.save();
   return garantia;
@@ -137,25 +141,42 @@ const deleteGarantiaById = async (garantiaId) => {
  */
 const register = async (userData) => {
   const garantia = await Garantia.getGarantiaById(userData.garantiaId);
-  const checkPhoneNumber = await CheckPhoneNumber.getCheckById(userData.garantiaId);
-  userData.phoneNumber = checkPhoneNumber.phoneNumber;
-  userData.checkPhoneNumber = checkPhoneNumber._id;
 
-  const user = await User.getUserByEmail(userData.email);
-  if (!user) {
-    const user = await User.create(userData);
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   }
+
+  // const checkPhoneNumber = await CheckPhoneNumber.getCheckById(userData.garantiaId);
+  // userData.phoneNumber = checkPhoneNumber.phoneNumber;
+  // userData.checkPhoneNumber = checkPhoneNumber._id;
+
+  const user = await User.findOne({ _id: userData.userId });
+
+  /* if (!user) {
+    const user = await User.create(userData);
+  } */
 
   if (user) {
     garantia.status = 'registered';
     garantia.userId = user._id;
     garantia.registeredAt = Date.now();
+
+    // Add the new fields from userData to garantia
+    garantia.policy = userData.policy;
+    garantia.email = userData.email;
+    garantia.address = userData.address;
+    garantia.city = userData.city;
+    garantia.firstName = userData.firstName;
+    garantia.lastName = userData.lastName;
+    garantia.number = userData.number;
+    garantia.phoneNumber = userData.phoneNumber;
+    garantia.zipcode = userData.zipcode;
+
+
+
     await garantia.save();
   }
-  // console.log({garantia, checkPhoneNumber, user});
-  if (!garantia) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
-  }
+
   return garantia.populate('usertId').execPopulate();
 };
 

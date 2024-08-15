@@ -14,9 +14,17 @@ const garantiaSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
-    builtOn: {
-      type: String,
-      trim: true,
+    builtAt: {
+      type: Date,
+    },
+    assignedAt: {
+      type: Date,
+    },
+    shippedAt: {
+      type: Date,
+    },
+    registeredAt: {
+      type: Date,
     },
     description: {
       type: String,
@@ -29,16 +37,10 @@ const garantiaSchema = mongoose.Schema(
     reseller: {
       type: String,
       trim: true,
-    },
-    shippedDate: {
-      type: Date,
-    },
+    },    
     soldTo: {
       type: String,
       trim: true,
-    },
-    registeredAt: {
-      type: Date,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -50,6 +52,35 @@ const garantiaSchema = mongoose.Schema(
       trim: true,
       enum: ['created', 'assigned', 'shipped', 'delivered', 'cancelled', 'sold', 'registered'],
       default: 'created',
+    },
+    phoneNumber: {
+      type: String,
+      // to-do: make this required: true,
+      trim: true,
+    },
+    firstName: {
+      type: String,
+      trim: true,
+    },
+    lastName: {
+      type: String,
+      trim: true,
+    },
+    address: {
+      type: String,
+      trim: false,
+    },
+    number: {
+      type: String,
+      trim: true,
+    },
+    city: {
+      type: String,
+      trim: true,
+    },
+    zipcode: {
+      type: String,
+      trim: true,
     },
   },
   {

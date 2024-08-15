@@ -118,6 +118,12 @@ const getList = {
   }),
 };
 
+const getListByUser = {
+  params: Joi.object().keys({
+    userId: Joi.string(),
+  }),
+};
+
 const register = {
   body: Joi.object().keys({
     garantiaId: Joi.string().required(),
@@ -128,8 +134,9 @@ const register = {
     city: Joi.string().required(),
     zipcode: Joi.string().required(),
     email: Joi.string().required().email(),
-    password: Joi.string().required(),
     policy: Joi.array().required(),
+    userId: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
   }),
 };
 
@@ -147,5 +154,6 @@ module.exports = {
   deleteGarantia,
   getUser,
   getList,
+  getListByUser,
   register,
 };
