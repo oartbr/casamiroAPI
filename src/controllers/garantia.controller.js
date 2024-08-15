@@ -42,7 +42,7 @@ const getGarantia = catchAsync(async (req, res) => {
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   }
-  res.send(garantia);
+  res.send({garantia});
 });
 
 const assign = catchAsync(async (req, res) => {
@@ -85,10 +85,20 @@ const getList = catchAsync(async (req, res) => {
   res.send(garantias);
 });
 
+const getListByUser = catchAsync(async (req, res) => {
+  const garantias = await garantiaService.getGarantiasByUserId(req.params.userId);
+
+  if (!garantias) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  res.send(garantias);
+});
+
 const register = catchAsync(async (req, res) => {
   const garantia = await garantiaService.register(req.body);
 
-  res.status(httpStatus.ACCEPTED).send(garantia); 
+  res.status(httpStatus.ACCEPTED).send(garantia);
 });
 
 const updateGarantia = catchAsync(async (req, res) => {
@@ -111,5 +121,6 @@ module.exports = {
   deleteGarantia,
   getUser,
   getList,
+  getListByUser,
   register,
 };

@@ -113,6 +113,16 @@ userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
 };
 
 /**
+ * Check if phoneNumber is taken
+ * @param {string} phoneNumber - The user's phoneNumber
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.isPhoneNumberTaken = async function (phoneNumber) {
+  const user = await this.findOne({ phoneNumber });
+  return !!user;
+};
+
+/**
  * Get if email is taken
  * @param {string} email - The user's email
  * @returns {Promise<boolean>}
