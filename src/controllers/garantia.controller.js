@@ -3,7 +3,7 @@ const pick = require('../utils/pick');
 const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { garantiaService } = require('../services');
-const { checkPhoneNumberService } = require('../services');
+// const { checkPhoneNumberService } = require('../services');
 const CodeGenerator = require('../utils/generator');
 
 const create = catchAsync(async (req, res) => {
@@ -15,8 +15,8 @@ const create = catchAsync(async (req, res) => {
 
     newGarantias.push(newGarantia);
 
-    if(newGarantia === false){
-      throw new ApiError(httpStatus.BAD_REQUEST , 'An error occurred while creating the garantias: ' + newGarantias.length);
+    if (newGarantia === false) {
+      throw new ApiError(httpStatus.BAD_REQUEST, `An error occurred while creating the garantias: ${newGarantias.length}`);
     }
   });
 
@@ -42,7 +42,7 @@ const getGarantia = catchAsync(async (req, res) => {
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   }
-  res.send({garantia});
+  res.send({ garantia });
 });
 
 const assign = catchAsync(async (req, res) => {

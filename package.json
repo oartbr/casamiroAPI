@@ -61,9 +61,11 @@
     "http-status": "^1.4.0",
     "joi": "^17.3.0",
     "jsonwebtoken": "^8.5.1",
+    "latest": "^0.2.0",
     "moment": "^2.24.0",
     "mongoose": "^5.7.7",
     "morgan": "^1.9.1",
+    "node": "^22.6.0",
     "nodemailer": "^6.3.1",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
@@ -72,6 +74,7 @@
     "swagger-ui-express": "^4.1.6",
     "twilio": "^5.2.2",
     "validator": "^13.0.0",
+    "vercel": "^36.0.0",
     "winston": "^3.2.1",
     "xss-clean": "^0.1.1"
   },
@@ -91,6 +94,7 @@
     "node-mocks-http": "^1.8.0",
     "nodemon": "^2.0.0",
     "prettier": "^2.0.5",
-    "supertest": "^6.0.1"
+    "supertest": "^6.0.1",
+    "yarn": "^1.22.22"
   }
 }
