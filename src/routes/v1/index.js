@@ -5,6 +5,7 @@ const garantiaRoute = require('./garantia.route');
 const messagingRoute = require('./messaging.route');
 const docsRoute = require('./docs.route');
 const config = require('../../config/config');
+const logger = require('../../config/logger');
 
 const router = express.Router();
 
@@ -46,4 +47,5 @@ if (config.env === 'development') {
   });
 }
 
+logger.info(`starting router`);
 module.exports = router;
