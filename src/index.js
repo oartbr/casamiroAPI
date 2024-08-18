@@ -2,16 +2,17 @@ const mongoose = require('mongoose');
 const app = require('./app');
 const config = require('./config/config');
 const logger = require('./config/logger');
-const { User } = require('./models');
+// const { User } = require('./models');
 
 let server;
 mongoose.connect(config.mongoose.url, config.mongoose.options).then(async () => {
   logger.info('Connected to MongoDB');
   // Get data from MongoDB
-  const data = await User.find();
 
   // Include data in logger message
-  logger.info(`Retrieved data from MongoDB: ${data}`);
+  // this is a test to check if Atlas is up and running:
+  // const data = await User.find();
+  // logger.info(`Retrieved data from MongoDB: ${data}`);
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);
   });

@@ -48,7 +48,7 @@ const verifyEmail = catchAsync(async (req, res) => {
 });
 
 const getMe = catchAsync(async (req, res) => {
-  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, "refresh");
+  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
   const user = await userService.getUserById(getVerifiedToken.user);
   res.status(httpStatus.OK).send(user);
 });
