@@ -69,4 +69,8 @@ module.exports = {
     authToken: process.env.TWILIO_AUTHTOKEN,
     phoneNumber: process.env.TWILIO_FROMWHATS,
   },
+  cors: {
+    origin: process.env.CORS_ORIGIN,
+    status: process.env.CORS_STATUS,
+  },
 };
