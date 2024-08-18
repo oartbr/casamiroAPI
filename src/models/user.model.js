@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const { toJSON, paginate } = require('./plugins');
-const { roles, enumRoles } = require('../config/roles');
-const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
+// const { roles, enumRoles } = require('../config/roles');
+// const ApiError = require('../utils/ApiError');
+// const httpStatus = require('http-status');
 
 const userSchema = mongoose.Schema(
   {
