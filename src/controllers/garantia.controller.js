@@ -98,7 +98,7 @@ const getListByUser = catchAsync(async (req, res) => {
 const register = catchAsync(async (req, res) => {
   const garantia = await garantiaService.register(req.body);
 
-  res.status(httpStatus.ACCEPTED).send(garantia);
+  res.status(httpStatus.OK).send(garantia);
 });
 
 const updateGarantia = catchAsync(async (req, res) => {

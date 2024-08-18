@@ -2,22 +2,22 @@ const httpStatus = require('http-status');
 // const pick = require('../utils/pick');
 // const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
-const { sendMessage, confirmWhatsCode, sendMessageLogin, confirmWhatsCodeLogin } = require('../services/messaging.service');
+const { sendMessage, sendMessageLogin, confirmWhatsCodeLogin } = require('../services/messaging.service');
 const { tokenService } = require('../services');
 // const { createCheck } = require('../services/checkPhoneNumber.service');
 const CodeGenerator = require('../utils/generator');
 
 const sendCodeWhatsApp = catchAsync(async (req, res) => {
   const oCode = new CodeGenerator(5, 'number');
-  const response = await sendMessage(req.body.phoneNumber, oCode.code, req.body.garantiaId || 'pending').then((message) => {
-    res.status(httpStatus.ACCEPTED).send({ success: `Code sent to ${req.body.phoneNumber}.` });
+  await sendMessage(req.body.phoneNumber, oCode.code, req.body.garantiaId || 'pending').then(() => {
+    res.status(httpStatus.OK).send({ success: `Code sent to ${req.body.phoneNumber}.` });
   });
 });
 
 const sendWhats = catchAsync(async (req, res) => {
   const oCode = new CodeGenerator(5, 'number');
-  const response = await sendMessageLogin(req.body.phoneNumber, oCode.code).then((message) => {
-    res.status(httpStatus.ACCEPTED).send({ success: `Code sent to ${req.body.phoneNumber}.` });
+  await sendMessageLogin(req.body.phoneNumber, oCode.code).then(() => {
+    res.status(httpStatus.OK).send({ success: `Code sent to ${req.body.phoneNumber}.` });
   });
 });
 
