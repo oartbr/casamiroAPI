@@ -12,7 +12,6 @@ mongoose.connect(config.mongoose.url, config.mongoose.options).then(async () => 
 
   // Include data in logger message
   logger.info(`Retrieved data from MongoDB: ${data}`);
-  logger.info(`Listening to port ${config.mongoose.url} :: ${config.mongoose.options}`);
   server = app.listen(config.port, () => {
     logger.info(`Listening to port ${config.port}`);
   });
