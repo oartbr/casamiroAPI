@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+// const httpStatus = require('http-status');
 const { toJSON, paginate } = require('./plugins');
-const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
+// const ApiError = require('../utils/ApiError');
 
 const clientSchema = mongoose.Schema(
   {
@@ -67,11 +67,12 @@ const clientSchema = mongoose.Schema(
       type: Object,
       default: false,
     },
-    password: { 
-      type: String, 
-      required: true, 
-      trim: true, 
-      minlength: 6 },
+    password: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 6,
+    },
   },
   {
     timestamps: true,
@@ -128,7 +129,7 @@ clientSchema.statics.getClientById = async function (clientId) {
  */
 clientSchema.statics.getClientByPhoneNumber = async function (phoneNumber) {
   const client = await this.findOne({ phoneNumber }).select('-policy -password -checkPhoneNumber');
-  console.log({ phoneNumber });
+  // console.log({ phoneNumber });
   if (client === null) {
     return null;
   }

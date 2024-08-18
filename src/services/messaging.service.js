@@ -1,19 +1,17 @@
 // src/services/twilioService.js
-const twilio = require('twilio');
+const Twilio = require('twilio');
 const httpStatus = require('http-status');
 const ApiError = require('../utils/ApiError');
 const config = require('../config/config');
-const { Garantia } = require('../models');
+// const { Garantia } = require('../models');
 const { CheckPhoneNumber } = require('../models');
 const { User } = require('../models');
 
-const messagingClient = new twilio(config.twilio.accountSid, config.twilio.authToken);
+const messagingClient = new Twilio(config.twilio.accountSid, config.twilio.authToken);
 
 const confirmWhatsCode = async (code, garantiaId) => {
-  
-  
   const confirmPhoneNumberCode = await CheckPhoneNumber.confirmCode(code, garantiaId);
-  
+
   if (!confirmPhoneNumberCode) {
     const countFails = await CheckPhoneNumber.findOne({ garantiaId });
     if (countFails === null) {
@@ -27,22 +25,15 @@ const confirmWhatsCode = async (code, garantiaId) => {
       throw new ApiError(httpStatus.PRECONDITION_REQUIRED, `Code doesn't match. ${countFails.count} failed attempts.`);
     }
   } else {
-    
-    const success = await CheckPhoneNumber.findOneAndUpdate(
-      { code, garantiaId },
-      { $set: { confirmed: true } },
-      { upsert: true }
-    );
+    await CheckPhoneNumber.findOneAndUpdate({ code, garantiaId }, { $set: { confirmed: true } }, { upsert: true });
   }
 
   return true;
 };
 
 const confirmWhatsCodeLogin = async (code, phoneNumber) => {
-  
-  
   const confirmPhoneNumberCode = await CheckPhoneNumber.confirmCodeLogin(code, phoneNumber);
-  
+
   if (!confirmPhoneNumberCode) {
     const countFails = await CheckPhoneNumber.findOne({ phoneNumber });
     if (countFails === null) {
@@ -56,41 +47,30 @@ const confirmWhatsCodeLogin = async (code, phoneNumber) => {
       throw new ApiError(httpStatus.PRECONDITION_REQUIRED, `Code doesn't match. ${countFails.count} failed attempts.`);
     }
   } else {
-    
-    const success = await CheckPhoneNumber.findOneAndUpdate(
-      { code, phoneNumber },
-      { $set: { confirmed: true } },
-      { upsert: true }
-    );
+    await CheckPhoneNumber.findOneAndUpdate({ code, phoneNumber }, { $set: { confirmed: true } }, { upsert: true });
   }
   const user = await User.findOne({ phoneNumber });
 
-  return {user, phoneNumber, confirmed: true};
+  return { user, phoneNumber, confirmed: true };
 };
 
-const sendMessage = async (phoneNumber, message, garantiaId) => {
+const sendMessage = async (phoneNumber, message) => {
   const toPhoneNumber = `whatsapp:${phoneNumber}`;
 
-  const garantiaExists = await Garantia.isGarantiaTaken(garantiaId);
-  const checkExists = await CheckPhoneNumber.checkExists({ garantiaId });
+  const checkExists = await CheckPhoneNumber.checkExists({ phoneNumber });
 
   if (!checkExists) {
-    const checkPhone = await CheckPhoneNumber.create({
-      garantiaId,
+    await CheckPhoneNumber.create({
       code: message,
       phoneNumber,
       count: 0,
     });
   } else {
-    const checkPhoneMess = await CheckPhoneNumber.updateOne(
-      { garantiaId },
-      { $set: { code: message, confirmed: false, count: 0, phoneNumber: phoneNumber } },
+    await CheckPhoneNumber.updateOne(
+      { phoneNumber },
+      { $set: { code: message, confirmed: false, count: 0, phoneNumber } },
       { upsert: true }
     );
-  }
-
-  if (!garantiaExists) {
-    throw new ApiError(httpStatus.NOT_FOUND, `Garantia doesn't exist.`);
   }
 
   try {
@@ -100,12 +80,14 @@ const sendMessage = async (phoneNumber, message, garantiaId) => {
         from: config.twilio.phoneNumber,
         to: toPhoneNumber,
       })
-      .then((mess) => {});
+      .then(() => {
+        // console.log(mess);
+      });
     return response;
   } catch (error) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Failed to send Message: ${error.message}`);
   }
-  return true;
+  // return true;
 };
 
 const sendMessageLogin = async (phoneNumber, message) => {
@@ -114,13 +96,13 @@ const sendMessageLogin = async (phoneNumber, message) => {
   const checkExists = await CheckPhoneNumber.checkExists({ phoneNumber });
 
   if (!checkExists) {
-    const checkPhone = await CheckPhoneNumber.create({
+    await CheckPhoneNumber.create({
       code: message,
       phoneNumber,
       count: 0,
     });
   } else {
-    const checkPhoneMess = await CheckPhoneNumber.updateOne(
+    await CheckPhoneNumber.updateOne(
       { phoneNumber },
       { $set: { code: message, confirmed: false, count: 0 } },
       { upsert: true }
@@ -134,12 +116,12 @@ const sendMessageLogin = async (phoneNumber, message) => {
         from: config.twilio.phoneNumber,
         to: toPhoneNumber,
       })
-      .then((mess) => {});
+      .then(() => {});
     return response;
   } catch (error) {
     throw new ApiError(httpStatus.BAD_REQUEST, `Failed to send Message: ${error.message}`);
   }
-  return true;
+  // return true;
 };
 
 module.exports = {

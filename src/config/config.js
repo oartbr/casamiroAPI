@@ -1,6 +1,7 @@
 const dotenv = require('dotenv');
 const path = require('path');
 const Joi = require('joi');
+const logger = require('./logger');
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
@@ -32,7 +33,7 @@ if (error) {
   throw new Error(`Config validation error: ${error.message}`);
 }
 
-console.log({ mongoURI: envVars.MONGODB_URL + (envVars.NODE_ENV === 'test' ? '-test' : '') });
+logger.info(`NODE_ENV: ${envVars.NODE_ENV}`);
 
 module.exports = {
   env: envVars.NODE_ENV,

@@ -37,7 +37,7 @@ const garantiaSchema = mongoose.Schema(
     reseller: {
       type: String,
       trim: true,
-    },    
+    },
     soldTo: {
       type: String,
       trim: true,
