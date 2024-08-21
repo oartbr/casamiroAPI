@@ -38,7 +38,9 @@ const getGarantias = catchAsync(async (req, res) => {
 });
 
 const getGarantia = catchAsync(async (req, res) => {
-  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId);
+  const userId = typeof req.params.userId !== 'undefined' ? req.params.userId : false;
+  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, userId);
+
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   }
@@ -89,7 +91,7 @@ const getListByUser = catchAsync(async (req, res) => {
   const garantias = await garantiaService.getGarantiasByUserId(req.params.userId);
 
   if (!garantias) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found'); // to-do: check if the user exists, or inform there are not garantias for this user
   }
 
   res.send(garantias);
