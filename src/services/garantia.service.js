@@ -52,10 +52,19 @@ const assign = async (assignObj) => {
  * @param {Object} filter - Mongo filter
  * @returns {Promise<QueryResult>}
  */
-const getGarantiaById = async (garantiaId) => {
+const getGarantiaById = async (garantiaId, userId) => {
   const garantia = await Garantia.getGarantiaById(garantiaId);
-  //console.log({garantiaTESTE: garantia});
-  return garantia;
+  const user = garantia.userId ? garantia.userId.toString() : false;
+
+  // return garantia if it received userId and is the same as the garantia.userId or if it doesn't have a userId.
+  if ((userId && user === userId) || (userId && !user) || (!userId && !user)) {
+    return garantia;
+  }
+  // return unauthorized if the garantia has a userId and it's different from the userId received.
+  if ((userId && user !== userId) || (!userId && user)) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+  }
+  return false;
 };
 
 /**
@@ -171,8 +180,6 @@ const register = async (userData) => {
     garantia.number = userData.number;
     garantia.phoneNumber = userData.phoneNumber;
     garantia.zipcode = userData.zipcode;
-
-
 
     await garantia.save();
   }

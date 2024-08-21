@@ -32,6 +32,7 @@ const getGarantias = {
 const getGarantia = {
   params: Joi.object().keys({
     garantiaId: Joi.string(),
+    userId: Joi.string(),
   }),
 };
 
@@ -139,7 +140,6 @@ const register = {
     phoneNumber: Joi.string().required(),
   }),
 };
-
 
 module.exports = {
   create,

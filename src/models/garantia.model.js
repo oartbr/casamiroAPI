@@ -123,7 +123,7 @@ garantiaSchema.statics.getGarantiaById = async function (garantiaId) {
  * @returns {Promise<boolean>}
  */
 garantiaSchema.statics.getGarantiasByUserId = async function (userId) {
-  const garantias = await this.find({ userId });
+  const garantias = await this.find({ userId }).sort({ registeredAt: -1 });
   if (!garantias) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantias not found for this user');
   }
