@@ -75,7 +75,7 @@ const generateAuthTokens = async (user) => {
 
   return {
     token: accessToken,
-    refreshToken: refreshToken,
+    refreshToken,
     tokenExpires: accessTokenExpires.toDate(),
   };
 
@@ -119,8 +119,6 @@ const generateVerifyEmailToken = async (user) => {
   await saveToken(verifyEmailToken, user.id, expires, tokenTypes.VERIFY_EMAIL);
   return verifyEmailToken;
 };
-
-
 
 module.exports = {
   generateToken,
