@@ -20,6 +20,7 @@ router.get('/getList/:userId', validate(garantiaValidation.getListByUser), garan
 router.get('/getUser/:garantiaId', validate(garantiaValidation.getUser), garantiaController.getUser);
 router.get('/:garantiaId/:userId', validate(garantiaValidation.getGarantia), garantiaController.getGarantia);
 router.get('/:garantiaId', validate(garantiaValidation.getGarantia), garantiaController.getGarantia);
+router.delete('/:garantiaId', validate(garantiaValidation.deleteGarantia), garantiaController.deleteGarantia);
 
 module.exports = router;
 

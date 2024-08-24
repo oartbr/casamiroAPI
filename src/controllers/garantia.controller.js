@@ -110,7 +110,7 @@ const updateGarantia = catchAsync(async (req, res) => {
 
 const deleteGarantia = catchAsync(async (req, res) => {
   await garantiaService.deleteGarantiaById(req.params.garantiaId);
-  res.status(httpStatus.NO_CONTENT).send();
+  res.status(httpStatus.NO_CONTENT).send({ success: 'Garantia deleted' });
 });
 
 module.exports = {

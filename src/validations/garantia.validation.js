@@ -95,7 +95,7 @@ const updateGarantia = {
 
 const deleteGarantia = {
   params: Joi.object().keys({
-    garantiaId: Joi.string().custom(objectId),
+    garantiaId: Joi.string(),
   }),
 };
 
