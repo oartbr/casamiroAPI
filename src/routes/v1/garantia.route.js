@@ -11,6 +11,7 @@ const router = express.Router();
 }); */
 
 router.post('/create', validate(garantiaValidation.create), garantiaController.create);
+router.get('/getAll', validate(garantiaValidation.getGarantias), garantiaController.getGarantias);
 router.get('/getAvailable', validate(garantiaValidation.getAvailable), garantiaController.getAvailable);
 router.post('/assign', validate(garantiaValidation.assign), garantiaController.assign);
 router.post('/register', validate(garantiaValidation.register), garantiaController.register);
