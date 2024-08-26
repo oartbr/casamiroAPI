@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.get('/', validate(userValidation.getUsers), userController.getUsers);
 router.post('/', validate(userValidation.createUser), userController.createUser);
+router.delete('/:userId', validate(userValidation.deleteUser), userController.deleteUser);
 /*
 router
   .route('/')

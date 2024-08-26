@@ -10,6 +10,7 @@ const createUser = {
     address: Joi.string(),
     city: Joi.string(),
     zipcode: Joi.string(),
+    phoneNumber: Joi.string(),
     policy: Joi.array().items({
       id: Joi.string(),
       name: Joi.string(),
