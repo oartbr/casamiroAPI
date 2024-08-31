@@ -28,6 +28,10 @@ const userSchema = mongoose.Schema(
       required: true,
       trim: true,
     },
+    photo: {
+      type: String,
+      trim: true,
+    },
     address: {
       type: String,
       trim: false,
