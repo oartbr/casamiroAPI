@@ -2,29 +2,21 @@
 const { put } = require('@vercel/blob');
 const { NextResponse } = require('next/server');
 const formidable = require('formidable');
-// const fs = require('fs');
-
-/*
-const httpStatus = require('http-status');
-const { User } = require('../models');
-const ApiError = require('../utils/ApiError');
-*/
+const fs = require('fs').promises;
 
 /**
  * Post file
  * @returns {Promise<Files>}
  */
-const postFile = async (request) => {
+const postFile = async (request, res, folder) => {
   try {
-    // const { searchParams } = new URL(`http://localhost:3007/v1/files${request.url}`);
-    // const filename = searchParams.get('filename');
-
     const form = new formidable.IncomingForm();
 
     return new Promise((resolve, reject) => {
       form.parse(request, async (err, fields, files) => {
         if (err) {
           reject(NextResponse.json({ error: 'Error parsing form data' }, { status: 500 }));
+          // console.log('first error');
           return;
         }
 
@@ -32,23 +24,27 @@ const postFile = async (request) => {
 
         if (!file[0]) {
           reject(NextResponse.json({ error: 'No file uploaded' }, { status: 400 }));
+          // console.log('no file error');
           return;
         }
 
         try {
-          const blob = await put(file[0].newFilename, file[0].filepath, {
+          const fileContent = await fs.readFile(file[0].filepath);
+          const blob = put(`${folder}/${file[0].newFilename}`, fileContent, {
             access: 'public',
             contentType: file[0].mimetype,
           });
-          resolve(NextResponse.json(blob));
-          return blob;
+          resolve(blob);
         } catch (uploadError) {
-          reject(NextResponse.json({ error: 'Error uploading file' }, { status: 500 }));
+          reject(NextResponse.json({ error: uploadError }, { status: 500 }));
+          // console.log('upload error', uploadError);
         }
       });
     });
   } catch (urlError) {
-    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
+    // console.log('fourth error');
+    res.status(500).json({ error: urlError });
+    return NextResponse.json({ error: urlError }, { status: 400 });
   }
 };
 
