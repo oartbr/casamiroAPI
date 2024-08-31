@@ -60,8 +60,24 @@ const verifyEmail = {
 };
 
 const getMe = {
-  query: Joi.object().keys({
-    // token: Joi.string().required(),
+  body: Joi.object().keys({
+    firstName: Joi.string(),
+    lastName: Joi.string(),
+    photo: Joi.string(),
+  }),
+  headers: Joi.object({
+    authorization: Joi.string(),
+  }),
+};
+
+const patchMe = {
+  body: Joi.object().keys({
+    firstName: Joi.string(),
+    lastName: Joi.string(),
+    photo: Joi.string(),
+  }),
+  headers: Joi.object({
+    authorization: Joi.string(),
   }),
 };
 
@@ -74,4 +90,5 @@ module.exports = {
   resetPassword,
   verifyEmail,
   getMe,
+  patchMe,
 };
