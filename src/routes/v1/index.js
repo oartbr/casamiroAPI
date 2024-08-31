@@ -4,6 +4,7 @@ const userRoute = require('./user.route');
 const garantiaRoute = require('./garantia.route');
 const messagingRoute = require('./messaging.route');
 const docsRoute = require('./docs.route');
+const filesRoute = require('./files.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -25,6 +26,10 @@ const defaultRoutes = [
   {
     path: '/messaging',
     route: messagingRoute,
+  },
+  {
+    path: '/files',
+    route: filesRoute,
   },
 ];
 
