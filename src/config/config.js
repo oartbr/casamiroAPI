@@ -73,4 +73,8 @@ module.exports = {
     origin: process.env.CORS_ORIGIN,
     status: process.env.CORS_STATUS,
   },
+  theme: {
+    primary: process.env.PRIMARY_COLOR,
+    secondary: process.env.SECONDARY_COLOR,
+  },
 };
