@@ -6,3 +6,4 @@ module.exports.garantiaService = require('./garantia.service');
 module.exports.messagingService = require('./messaging.service');
 module.exports.checkPhoneNumberService = require('./checkPhoneNumber.service');
 module.exports.filesService = require('./files.service');
+module.exports.qrcodeService = require('./qrcode.service');

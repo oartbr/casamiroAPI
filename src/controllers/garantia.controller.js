@@ -5,13 +5,28 @@ const catchAsync = require('../utils/catchAsync');
 const { garantiaService } = require('../services');
 // const { checkPhoneNumberService } = require('../services');
 const CodeGenerator = require('../utils/generator');
+const { qrcodeService } = require('../services');
+const { filesService } = require('../services');
 
 const create = catchAsync(async (req, res) => {
   const aGarantias = new CodeGenerator(req.body.length, req.body.type, req.body.prefix);
   aGarantias.create(req.body.quantity);
   const newGarantias = [];
   await aGarantias.collection.forEach(async (code) => {
-    const newGarantia = await garantiaService.create({ garantiaId: code, brand: '', description: '', sku: '' });
+    const qrCode = await qrcodeService.getQRcode(`https://localhost:3000/${code}`);
+    const finalQR = await qrcodeService.insertLogo(
+      qrCode,
+      'https://xvzq0akbnljx2cl9.public.blob.vercel-storage.com/themes/wse/logoWSE-HZItyBCDiYGKbpHRYIslQ1TIdAwTde.svg'
+    );
+    const fileUpload = await filesService.postQRcode(finalQR, code, 'garantias');
+    // console.log({ url: fileUpload.url });
+    const newGarantia = await garantiaService.create({
+      garantiaId: code,
+      brand: '',
+      description: '',
+      sku: '',
+      url: fileUpload.url,
+    });
 
     newGarantias.push(newGarantia);
 
