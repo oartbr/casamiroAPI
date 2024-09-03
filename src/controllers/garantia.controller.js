@@ -11,15 +11,12 @@ const { filesService } = require('../services');
 const create = catchAsync(async (req, res) => {
   const aGarantias = new CodeGenerator(req.body.length, req.body.type, req.body.prefix);
   aGarantias.create(req.body.quantity);
+
   const newGarantias = [];
   await aGarantias.collection.forEach(async (code) => {
-    const qrCode = await qrcodeService.getQRcode(`https://localhost:3000/${code}`);
-    const finalQR = await qrcodeService.insertLogo(
-      qrCode,
-      'https://xvzq0akbnljx2cl9.public.blob.vercel-storage.com/themes/wse/logoWSE-HZItyBCDiYGKbpHRYIslQ1TIdAwTde.svg'
-    );
+    const qrCode = await qrcodeService.getQRcode(`${process.env.CORS_ORIGIN}/${code}`);
+    const finalQR = await qrcodeService.insertLogo(qrCode, process.env.COMPANY_LOGO);
     const fileUpload = await filesService.postQRcode(finalQR, code, 'garantias');
-    // console.log({ url: fileUpload.url });
     const newGarantia = await garantiaService.create({
       garantiaId: code,
       brand: '',
