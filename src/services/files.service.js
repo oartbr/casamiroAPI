@@ -1,8 +1,9 @@
-// Add the following line to import the '@vercel/blob' package
 const { put } = require('@vercel/blob');
 const { NextResponse } = require('next/server');
 const formidable = require('formidable');
 const fs = require('fs').promises;
+const httpStatus = require('http-status');
+const ApiError = require('../utils/ApiError');
 
 /**
  * Post file
@@ -48,6 +49,23 @@ const postFile = async (request, res, folder) => {
   }
 };
 
+/**
+ * Post file
+ * @returns {Promise<Files>}
+ */
+const postQRcode = async (file, filename, folder) => {
+  try {
+    const blob = put(`${folder}/${filename}.svg`, file, {
+      access: 'public',
+      contentType: file.mimetype,
+    });
+    return blob;
+  } catch (uploadError) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, { error: uploadError });
+  }
+};
+
 module.exports = {
   postFile,
+  postQRcode,
 };

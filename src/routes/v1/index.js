@@ -5,6 +5,7 @@ const garantiaRoute = require('./garantia.route');
 const messagingRoute = require('./messaging.route');
 const docsRoute = require('./docs.route');
 const filesRoute = require('./files.route');
+const qrcodeRoute = require('./qrcode.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -30,6 +31,10 @@ const defaultRoutes = [
   {
     path: '/files',
     route: filesRoute,
+  },
+  {
+    path: '/QRcode',
+    route: qrcodeRoute,
   },
 ];
 
