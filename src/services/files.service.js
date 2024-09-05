@@ -54,15 +54,16 @@ const postFile = async (request, res, folder) => {
  * @returns {Promise<Files>}
  */
 const postQRcode = async (file, filename, folder) => {
-  try {
-    const blob = put(`${folder}/${filename}.svg`, file, {
-      access: 'public',
-      contentType: file.mimetype,
-    });
-    return blob;
-  } catch (uploadError) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, { error: uploadError });
+  const blob = put(`${folder}/${filename}.svg`, file, {
+    access: 'public',
+    contentType: file.mimetype,
+  });
+
+  if (!blob) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, { error: 'Error uploading file' });
   }
+
+  return blob;
 };
 
 module.exports = {
