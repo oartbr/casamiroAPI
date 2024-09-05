@@ -32,7 +32,7 @@ const create = catchAsync(async (req, res) => {
     }
   });
 
-  res.status(httpStatus.CREATED).send(aGarantias.collection);
+  res.status(httpStatus.CREATED).send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection });
 });
 
 const getAvailable = catchAsync(async (req, res) => {
