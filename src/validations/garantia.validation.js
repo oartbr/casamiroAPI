@@ -23,10 +23,11 @@ const getGarantias = {
   query: Joi.object().keys({
     owner: Joi.string(),
     role: Joi.string(),
-    sortBy: Joi.string(),
+    orderBy: Joi.string(),
     sort: Joi.string(),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+    filters: Joi.string(),
   }),
 };
 
