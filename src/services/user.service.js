@@ -27,8 +27,23 @@ const createUser = async (userBody) => {
  * @returns {Promise<QueryResult>}
  */
 const queryUsers = async (filter, options) => {
-  const newOptions = { ...options, sortBy: options.sortBy };
+  /* const newOptions = { ...options, sortBy: options.sortBy };
   const users = await User.paginate(filter, newOptions);
+  return users; */
+
+  const parsedFilter = filter.filters ? JSON.parse(filter.filters) : { status: [] };
+  const parsedSort = JSON.parse(options.sort);
+  const filterResults =
+    parsedFilter.roles && parsedFilter.roles.length > 0
+      ? { 'role.id': parsedFilter.roles.map((item) => item.id) }
+      : { 'role.id': [1, 2] };
+  const adjustedOptions = {
+    limit: parseInt(options.limit, 10),
+    offset: (parseInt(options.page, 10) - 1) * parseInt(options.limit, 10),
+    sortBy: parsedSort[0].order === 'desc' ? `{ -${parsedSort[0].orderBy}: -1 }` : `{ ${parsedSort[0].orderBy}: 1 }`,
+  };
+  // console.log({ filterResults, adjustedOptions });
+  const users = await User.paginate(filterResults, adjustedOptions);
   return users;
 };
 

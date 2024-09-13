@@ -40,7 +40,9 @@ const create = catchAsync(async (req, res) => {
     }
   });
 
-  res.status(httpStatus.CREATED).send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection, oooGarantias });
+  res
+    .status(httpStatus.CREATED)
+    .send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection, oooGarantias });
 });
 
 const getAvailable = catchAsync(async (req, res) => {
@@ -51,8 +53,9 @@ const getAvailable = catchAsync(async (req, res) => {
 });
 
 const getGarantias = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ['name', 'role']);
   const options = pick(req.query, ['sort', 'limit', 'page']);
+  const filter = pick(req.query, ['filters']);
+  // console.log({filter, options});
   const result = await garantiaService.queryGarantias(filter, options);
   res.send(result);
 });
