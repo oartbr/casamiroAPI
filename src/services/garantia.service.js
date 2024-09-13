@@ -114,9 +114,11 @@ const queryGarantias = async (filter, options) => {
     limit: parseInt(options.limit, 10),
     offset: (parseInt(options.page, 10) - 1) * parseInt(options.limit, 10),
     sortBy: parsedSort[0].order === 'desc' ? `{ -${parsedSort[0].orderBy}: -1 }` : `{ ${parsedSort[0].orderBy}: 1 }`,
+    page: parseInt(options.page, 10),
   };
   // console.log({ filterResults, adjustedOptions });
   const garantias = await Garantia.paginate(filterResults, adjustedOptions);
+  garantias.hasNextPage = garantias.page < garantias.totalPages;
   return garantias;
 };
 
