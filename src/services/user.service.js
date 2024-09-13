@@ -44,6 +44,7 @@ const queryUsers = async (filter, options) => {
   };
   // console.log({ filterResults, adjustedOptions });
   const users = await User.paginate(filterResults, adjustedOptions);
+  users.hasNextPage = users.page < users.totalPages;
   return users;
 };
 
