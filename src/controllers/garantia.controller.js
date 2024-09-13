@@ -55,8 +55,8 @@ const getAvailable = catchAsync(async (req, res) => {
 const getGarantias = catchAsync(async (req, res) => {
   const options = pick(req.query, ['sort', 'limit', 'page']);
   const filter = pick(req.query, ['filters']);
-  // console.log({filter, options});
   const result = await garantiaService.queryGarantias(filter, options);
+  // console.log({page: result.page, totalPages: result.totalPages, totalResults: result.totalResults, hasNextPage: result.hasNextPage});
   res.send(result);
 });
 
