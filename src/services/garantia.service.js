@@ -109,16 +109,14 @@ const queryGarantias = async (filter, options) => {
   const parsedSort = JSON.parse(options.sort);
   // const parsedSort = JSON.parse(options.sort);
   const filterResults =
-    parsedFilter.status && parsedFilter.status.length > 0
-      ? parsedFilter.status.map((item) => item.id)
-      : { status: ['registered'] };
+    parsedFilter.status && parsedFilter.status.length > 0 ? { status: parsedFilter.status.map((item) => item.id) } : {};
   const adjustedOptions = {
     limit: parseInt(options.limit, 10),
     offset: (parseInt(options.page, 10) - 1) * parseInt(options.limit, 10),
     sortBy: parsedSort[0].order === 'desc' ? `{ -${parsedSort[0].orderBy}: -1 }` : `{ ${parsedSort[0].orderBy}: 1 }`,
   };
   // console.log({ filterResults, adjustedOptions });
-  const garantias = await Garantia.paginate({ status: filterResults }, adjustedOptions);
+  const garantias = await Garantia.paginate(filterResults, adjustedOptions);
   return garantias;
 };
 
