@@ -6,6 +6,7 @@ const messagingRoute = require('./messaging.route');
 const docsRoute = require('./docs.route');
 const filesRoute = require('./files.route');
 const qrcodeRoute = require('./qrcode.route');
+const skuRoute = require('./sku.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -35,6 +36,10 @@ const defaultRoutes = [
   {
     path: '/QRcode',
     route: qrcodeRoute,
+  },
+  {
+    path: '/sku',
+    route: skuRoute,
   },
 ];
 
