@@ -78,18 +78,27 @@ const sellGarantia = {
 
 const updateGarantia = {
   params: Joi.object().keys({
-    garantiaId: Joi.required().custom(objectId),
+    garantiaId: Joi.required(),
   }),
   body: Joi.object()
     .keys({
+      garantiaId: Joi.string(),
       brand: Joi.string().required(),
-      builtOn: Joi.string().required(),
+      createdAt: Joi.string(),
+      updateddAt: Joi.string(),
+      assignedAt: Joi.string(),
+      registeredAt: Joi.string(),
+      firstName: Joi.string().required(),
       lastName: Joi.string().required(),
-      garantiaID: Joi.string().required(),
       description: Joi.string().required(),
-      owner: Joi.string().required(),
+      owner: Joi.string(),
       sku: Joi.string().required(),
-      soldTo: Joi.string().required(),
+      soldTo: Joi.string(),
+      address: Joi.string().required(),
+      city: Joi.string().required(),
+      zipcode: Joi.string().required(),
+      phoneNumber: Joi.string(),
+      number: Joi.number().required(),
     })
     .min(1),
 };

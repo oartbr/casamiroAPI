@@ -15,6 +15,7 @@ router.get('/getAll', validate(garantiaValidation.getGarantias), garantiaControl
 router.get('/getAvailable', validate(garantiaValidation.getAvailable), garantiaController.getAvailable);
 router.post('/assign', validate(garantiaValidation.assign), garantiaController.assign);
 router.post('/register', validate(garantiaValidation.register), garantiaController.register);
+router.patch('/:garantiaId', validate(garantiaValidation.updateGarantia), garantiaController.updateGarantia);
 router.get('/getListByGarantia/:garantiaId', validate(garantiaValidation.getList), garantiaController.getList);
 router.get('/getList/:userId', validate(garantiaValidation.getListByUser), garantiaController.getListByUser);
 router.get('/getUser/:garantiaId', validate(garantiaValidation.getUser), garantiaController.getUser);

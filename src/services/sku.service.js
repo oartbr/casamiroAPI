@@ -69,14 +69,12 @@ const getSkuByEmail = async (email) => {
  * @param {Object} updateBody
  * @returns {Promise<Sku>}
  */
-const updateSkuById = async (skuId, updateBody) => {
-  const sku = await getSkuById(skuId);
+const updateSkuById = async (id, updateBody) => {
+  const sku = await getSkuById(id);
   if (!sku) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Sku not found');
   }
-  if (updateBody.email && (await Sku.isEmailTaken(updateBody.email, skuId))) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
-  }
+
   Object.assign(sku, updateBody);
   await sku.save();
   return sku;

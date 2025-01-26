@@ -21,15 +21,15 @@ const getSkus = catchAsync(async (req, res) => {
 });
 
 const getSku = catchAsync(async (req, res) => {
-  const sku = await skuService.getSkuById(req.params.skuId);
+  const sku = await skuService.getSkuById(req.params.id);
   if (!sku) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Sku not found');
   }
-  res.send(sku);
+  res.send({ sku });
 });
 
 const updateSku = catchAsync(async (req, res) => {
-  const sku = await skuService.updateSkuById(req.params.skuId, req.body);
+  const sku = await skuService.updateSkuById(req.params.id, req.body);
   res.send(sku);
 });
 
