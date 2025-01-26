@@ -129,12 +129,29 @@ const queryGarantias = async (filter, options) => {
  * @returns {Promise<Garantia>}
  */
 const updateGarantiaById = async (garantiaId, updateBody) => {
-  const garantia = await Garantia.getGarantiaById(garantiaId);
+  const garantia = await Garantia.findOne({ garantiaId });
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
   }
   if (updateBody.email && (await garantia.isEmailTaken(updateBody.email, garantiaId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
+  }
+
+  Object.assign(garantia, updateBody);
+  await garantia.save();
+  return garantia;
+};
+
+/**
+ * Patch garantia by id
+ * @param {ObjectId} garantiaId
+ * @param {Object} updateBody
+ * @returns {Promise<Garantia>}
+ */
+const patchGarantiaById = async (garantiaId, updateBody) => {
+  const garantia = await Garantia.getGarantiaById(garantiaId);
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   }
 
   Object.assign(garantia, updateBody);
@@ -206,6 +223,7 @@ module.exports = {
   getGarantiaById,
   queryGarantias,
   updateGarantiaById,
+  patchGarantiaById,
   deleteGarantiaById,
   getUserByGarantiaId,
   getGarantiasByUserId,

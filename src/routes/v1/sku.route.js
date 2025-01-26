@@ -6,9 +6,11 @@ const skuController = require('../../controllers/sku.controller');
 
 const router = express.Router();
 
-router.get('/:skuId', validate(skuValidation.getSku), skuController.getSku);
+router.get('/getAll', validate(skuValidation.getSkus), skuController.getSkus);
+router.get('/:id', validate(skuValidation.getSku), skuController.getSku);
 router.get('/', validate(skuValidation.getSkus), skuController.getSkus);
-router.post('/', validate(skuValidation.createSku), skuController.createSku);
+router.post('/create', validate(skuValidation.createSku), skuController.createSku);
+router.patch('/:id', validate(skuValidation.updateSku), skuController.updateSku);
 router.delete('/:skuId', validate(skuValidation.deleteSku), skuController.deleteSku);
 
 /*

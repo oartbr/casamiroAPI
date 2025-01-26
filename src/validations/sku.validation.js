@@ -9,8 +9,8 @@ const createSku = {
     category: Joi.string(),
     capacity: Joi.number().integer(),
     length: Joi.number().integer(),
-    width: Joi.string(),
-    height: Joi.string(),
+    width: Joi.number().integer(),
+    height: Joi.number().integer(),
     weight: Joi.number().integer(),
     material: Joi.string(),
     cost: Joi.number().integer(),
@@ -25,28 +25,34 @@ const getSkus = {
   query: Joi.object().keys({
     category: Joi.string(),
     capacity: Joi.number().integer(),
+    orderBy: Joi.string(),
+    sort: Joi.string(),
+    limit: Joi.number().integer(),
+    page: Joi.number().integer(),
+    filters: Joi.string(),
   }),
 };
 
 const getSku = {
   params: Joi.object().keys({
-    skuId: Joi.string().custom(objectId),
+    id: Joi.string().custom(objectId),
   }),
 };
 
 const updateSku = {
   params: Joi.object().keys({
-    skuId: Joi.required().custom(objectId),
+    id: Joi.required().custom(objectId),
   }),
   body: Joi.object()
     .keys({
+      skuId: Joi.string(),
       name: Joi.string(),
       description: Joi.string(),
       category: Joi.string(),
       capacity: Joi.number().integer(),
       length: Joi.number().integer(),
-      width: Joi.string(),
-      height: Joi.string(),
+      width: Joi.number().integer(),
+      height: Joi.number().integer(),
       weight: Joi.number().integer(),
       material: Joi.string(),
       cost: Joi.number().integer(),
@@ -54,6 +60,7 @@ const updateSku = {
       brand: Joi.string(),
       madeOn: Joi.date(),
       madeIn: Joi.string(),
+      id: Joi.string(), // this is just to allow the id to be passed in the body
     })
     .min(1),
 };
