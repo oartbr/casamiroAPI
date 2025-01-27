@@ -47,9 +47,14 @@ const updateUser = {
   }),
   body: Joi.object()
     .keys({
-      email: Joi.string().email(),
+      firstName: Joi.string().required(),
+      lastName: Joi.string().required(),
+      photo: Joi.string(),
+      role: Joi.object().keys({
+        id: Joi.number(),
+      }),
       password: Joi.string().custom(password),
-      name: Joi.string(),
+      passwordConfirmation: Joi.string(),
     })
     .min(1),
 };

@@ -7,6 +7,8 @@ const userController = require('../../controllers/user.controller');
 const router = express.Router();
 
 router.get('/', validate(userValidation.getUsers), userController.getUsers);
+router.get('/:userId', validate(userValidation.getUser), userController.getUser);
+router.patch('/:userId', validate(userValidation.updateUser), userController.updateUser);
 router.post('/', validate(userValidation.createUser), userController.createUser);
 router.delete('/:userId', validate(userValidation.deleteUser), userController.deleteUser);
 /*
