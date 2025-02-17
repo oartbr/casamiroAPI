@@ -13,36 +13,28 @@ const create = catchAsync(async (req, res) => {
   aGarantias.create(req.body.quantity);
 
   const newGarantias = [];
-  const oooGarantias = [];
-  await aGarantias.collection.forEach(async (code) => {
-    const qrCode = await qrcodeService.getQRcode(`${process.env.CORS_ORIGIN}/${code}`);
-    const finalQR = await qrcodeService.insertLogo(qrCode, process.env.COMPANY_LOGO);
-    const fileUpload = await filesService.postQRcode(finalQR, code, 'garantias');
-    const newGarantia = await garantiaService.create({
-      garantiaId: code,
-      brand: '',
-      description: '',
-      sku: '',
-      url: fileUpload.url,
-    });
 
-    newGarantias.push(newGarantia);
-    oooGarantias.push({
-      garantiaId: code,
-      brand: '',
-      description: '',
-      sku: '',
-      url: fileUpload.url,
-    });
+  await Promise.all(
+    aGarantias.collection.map(async (code) => {
+      const qrCode = await qrcodeService.getQRcode(`${process.env.CORS_ORIGIN}/${code}`);
+      const finalQR = await qrcodeService.insertLogo(qrCode, process.env.COMPANY_LOGO);
+      const fileUpload = await filesService.postQRcode(finalQR, code, 'garantias');
+      const newGarantia = await garantiaService.create({
+        garantiaId: code,
+        brand: '',
+        description: '',
+        sku: '',
+        url: fileUpload.url,
+      });
 
-    if (newGarantia === false) {
-      throw new ApiError(httpStatus.BAD_REQUEST, `An error occurred while creating the garantias: ${newGarantias.length}`);
-    }
-  });
+      newGarantias.push(newGarantia);
 
-  res
-    .status(httpStatus.CREATED)
-    .send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection, oooGarantias });
+      if (newGarantia === false) {
+        throw new ApiError(httpStatus.BAD_REQUEST, `An error occurred while creating the garantias: ${newGarantias.length}`);
+      }
+    })
+  );
+  res.status(httpStatus.CREATED).send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection });
 });
 
 const getAvailable = catchAsync(async (req, res) => {
