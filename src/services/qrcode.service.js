@@ -35,10 +35,10 @@ const insertLogo = async (QRcode, logoUrl) => {
   const logoSvg = logoDom.window.document.querySelector('svg');
 
   // Adjust the logo size and position
-  logoSvg.setAttribute('x', '30%');
-  logoSvg.setAttribute('y', '30%');
-  logoSvg.setAttribute('width', '40%');
-  logoSvg.setAttribute('height', '40%');
+  logoSvg.setAttribute('x', '40%');
+  logoSvg.setAttribute('y', '40%');
+  logoSvg.setAttribute('width', '20%');
+  logoSvg.setAttribute('height', '20%');
   logoSvg.setAttribute('fill', '#ffffffff');
 
   // Append the logo to the QR code SVG
