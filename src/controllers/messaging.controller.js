@@ -14,6 +14,7 @@ const sendCodeWhatsApp = catchAsync(async (req, res) => {
   });
 });
 
+// snedWhats is a function that sends a code to a phone number
 const sendWhats = catchAsync(async (req, res) => {
   const oCode = new CodeGenerator(5, 'number');
   await sendMessageLogin(req.body.phoneNumber, oCode.code).then(() => {

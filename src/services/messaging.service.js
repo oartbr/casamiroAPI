@@ -90,18 +90,21 @@ const sendMessage = async (phoneNumber, message) => {
   // return true;
 };
 
+// this function sends an authentication to the user's phone number
 const sendMessageLogin = async (phoneNumber, message) => {
   const toPhoneNumber = `whatsapp:${phoneNumber}`;
 
-  const checkExists = await CheckPhoneNumber.checkExists({ phoneNumber });
+  const checkExists = await CheckPhoneNumber.checkExists({ phoneNumber }); // is the number on the db already?
 
   if (!checkExists) {
+    // if not, create a new entry
     await CheckPhoneNumber.create({
       code: message,
       phoneNumber,
       count: 0,
     });
   } else {
+    // if it is, update the entry with the new code
     await CheckPhoneNumber.updateOne(
       { phoneNumber },
       { $set: { code: message, confirmed: false, count: 0 } },
@@ -110,11 +113,19 @@ const sendMessageLogin = async (phoneNumber, message) => {
   }
 
   try {
+    // send the code via whatsapp.
+    // The message is a template that will be replaced by the code
+    // The trick here is that we don't send a message, but a contentVariable with the code inside a template {{1:code}}
+    // t still needs to receive the body of the message, but it will be replaced by the code
     const response = await messagingClient.messages
       .create({
-        body: message,
+        body: `{{${message}}}`,
         from: config.twilio.phoneNumber,
+        contentSid: config.WA.authenticationId,
         to: toPhoneNumber,
+        contentVariables: JSON.stringify({
+          1: message,
+        }),
       })
       .then(() => {});
     return response;
