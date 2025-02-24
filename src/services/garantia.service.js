@@ -30,14 +30,14 @@ const create = async (garantiaId) => {
  * @param {string} sku
  * @returns {Promise<garantia>}
  */
-const assign = async (assignObj) => {
+const assign = async (assignObj, body) => {
   const garantia = await Garantia.findOne({ garantiaId: assignObj.garantiaId });
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
   } else {
-    garantia.brand = assignObj.brand;
-    garantia.description = assignObj.description;
-    garantia.sku = assignObj.sku;
+    garantia.brand = body.brand;
+    garantia.description = body.description;
+    garantia.sku = body.sku;
     garantia.status = 'assigned';
     garantia.assignedAt = Date.now();
 
@@ -131,7 +131,7 @@ const queryGarantias = async (filter, options) => {
 const updateGarantiaById = async (garantiaId, updateBody) => {
   const garantia = await Garantia.findOne({ garantiaId });
   if (!garantia) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
+    throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   }
   if (updateBody.email && (await garantia.isEmailTaken(updateBody.email, garantiaId))) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Email already taken');
