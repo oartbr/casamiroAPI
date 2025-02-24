@@ -110,8 +110,10 @@ const deleteGarantia = {
 };
 
 const assign = {
+  params: Joi.object().keys({
+    garantiaId: Joi.string(),
+  }),
   body: Joi.object().keys({
-    garantiaId: Joi.string().required(),
     brand: Joi.string().required(),
     description: Joi.string().required(),
     sku: Joi.string().required(),

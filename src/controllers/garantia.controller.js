@@ -63,11 +63,10 @@ const getGarantia = catchAsync(async (req, res) => {
 });
 
 const assign = catchAsync(async (req, res) => {
-  const garantia = await garantiaService.getGarantiaById(req.body.garantiaId);
+  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, req.body);
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   } else if (
-    garantia.status === 'assigned' ||
     garantia.status === 'shipped' ||
     garantia.status === 'delivered' ||
     garantia.status === 'cancelled' ||
@@ -76,9 +75,9 @@ const assign = catchAsync(async (req, res) => {
   ) {
     throw new ApiError(httpStatus.LOCKED, 'Garantia already assigned');
   }
-  const assignAction = await garantiaService.assign(req.body);
+  const assignAction = await garantiaService.assign(garantia, req.body);
   // console.log({ assign: assignAction });
-  res.status(httpStatus.ACCEPTED).send(assignAction);
+  res.status(httpStatus.OK).send(assignAction);
 });
 
 const getUser = catchAsync(async (req, res) => {
