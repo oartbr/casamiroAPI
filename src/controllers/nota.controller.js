@@ -8,7 +8,7 @@ const checkNota = catchAsync(async (req, res) => {
   // console.log({body: req.body});
   const nota = await notaService.checkNota(req.body);
 
-  res.status(httpStatus.CREATED).send(nota);
+  res.status(httpStatus.CREATED).send({ nota });
 });
 
 const getNotas = catchAsync(async (req, res) => {

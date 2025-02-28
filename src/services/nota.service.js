@@ -5,7 +5,7 @@ const { Nota, User } = require('../models');
 /**
  * check a nota
  * @param {Object} notaBody
- * @returns {Promise<Sku>}
+ * @returns {Promise<Nota>}
  */
 const checkNota = async (notaBody) => {
   const exists = await Nota.findOne({ notaUrl: notaBody.notaUrl });
