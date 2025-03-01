@@ -7,6 +7,7 @@ const notaController = require('../../controllers/nota.controller');
 const router = express.Router();
 
 router.post('/check', validate(notaValidation.checkNota), notaController.checkNota);
+router.get('/getAll', validate(notaValidation.getAll), notaController.getAll);
 /*
 router.get('/getAll', validate(notaValidation.getnotas), notaController.getnotas);
 router.get('/:id', validate(notaValidation.getnota), notaController.getnota);

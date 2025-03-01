@@ -11,6 +11,15 @@ const checkNota = catchAsync(async (req, res) => {
   res.status(httpStatus.CREATED).send({ nota });
 });
 
+const getAll = catchAsync(async (req, res) => {
+  // const filter = pick(req.query, ['name', 'role']);
+  const options = pick(req.query, ['sort', 'limit', 'page']);
+  const filter = pick(req.query, ['filters']);
+  // console.log({req: req.query, filter, options});
+  const result = await notaService.queryNotas(filter, options);
+  res.status(httpStatus.OK).send(result);
+});
+
 const getNotas = catchAsync(async (req, res) => {
   // const filter = pick(req.query, ['name', 'role']);
   const options = pick(req.query, ['sort', 'limit', 'page']);
@@ -40,6 +49,7 @@ const deleteNota = catchAsync(async (req, res) => {
 
 module.exports = {
   checkNota,
+  getAll,
   getNotas,
   getNota,
   updateNota,

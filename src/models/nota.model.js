@@ -24,7 +24,8 @@ const notaSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      integer: true,
+      required: true,
+      enum: ['pending', 'read', 'cannceled', 'flagged'],
     },
     processDate: {
       type: Date,
