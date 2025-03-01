@@ -1,6 +1,7 @@
 // const httpStatus = require('http-status');
 const { Nota, User } = require('../models');
 // const ApiError = require('../utils/ApiError');
+const CodeGenerator = require('../utils/generator');
 
 /**
  * check a nota
@@ -25,6 +26,7 @@ const checkNota = async (notaBody) => {
     user: user._id,
     status: 'pending',
     registeredAt: new Date(),
+    code: new CodeGenerator(9, 'string', 'm').code,
   });
   return newNota;
 };
