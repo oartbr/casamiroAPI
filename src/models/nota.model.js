@@ -15,22 +15,35 @@ const notaSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    purchaseDate: {
+      type: Date,
+    },
     registeredAt: {
       type: Date,
       required: true,
     },
-    purchaseDate: {
-      type: Date,
-    },
     status: {
       type: String,
       required: true,
-      enum: ['pending', 'read', 'cannceled', 'flagged'],
+      enum: ['pending', 'read', 'canceled', 'flagged'],
     },
-    processDate: {
+    readAt: {
       type: Date,
     },
     code: {
+      type: String,
+    },
+    vendor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Vendor',
+    },
+    items: {
+      type: Array,
+    },
+    total: {
+      type: Number,
+    },
+    vendorName: {
       type: String,
     },
   },

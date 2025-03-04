@@ -19,7 +19,22 @@ const getAll = {
   }),
 };
 
+const get = {
+  query: Joi.object().keys({
+    id: Joi.string(),
+  }),
+};
+
+const loadNota = {
+  body: Joi.object().keys({
+    notaUrl: Joi.string(),
+    userId: Joi.string(),
+  }),
+};
+
 module.exports = {
   checkNota,
   getAll,
+  loadNota,
+  get,
 };

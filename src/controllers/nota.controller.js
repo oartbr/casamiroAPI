@@ -20,6 +20,13 @@ const getAll = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(result);
 });
 
+const loadNota = catchAsync(async (req, res) => {
+  const filter = { status: 'pending' };
+  const options = { sort: { createdAt: 1 }, limit: 1 };
+  const result = await notaService.loadNota(filter, options);
+  res.send(result);
+});
+
 const getNotas = catchAsync(async (req, res) => {
   // const filter = pick(req.query, ['name', 'role']);
   const options = pick(req.query, ['sort', 'limit', 'page']);
@@ -52,6 +59,7 @@ module.exports = {
   getAll,
   getNotas,
   getNota,
+  loadNota,
   updateNota,
   deleteNota,
 };

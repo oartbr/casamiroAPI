@@ -1,7 +1,8 @@
 // const httpStatus = require('http-status');
-const { Nota, User } = require('../models');
+const { Nota, User, Vendor } = require('../models');
 // const ApiError = require('../utils/ApiError');
 const CodeGenerator = require('../utils/generator');
+const { SelectStateScraper } = require('../utils/scrapers/selectStateScraper');
 
 /**
  * check a nota
@@ -59,7 +60,59 @@ const queryNotas = async (filter, options) => {
   return notas;
 };
 
+/**
+ * load a nota:::: To-do from here
+ * @param {Object} notaBody
+ * @returns {Promise<Nota>}
+ */
+const loadNota = async (filter, options) => {
+  const existing = await Nota.findOne(filter, {}, options);
+
+  if (!existing) {
+    throw new Error('Nota not found');
+  }
+  const selector = new SelectStateScraper(existing.url);
+  const notaData = await selector.select();
+  await notaData.readUrl();
+  await notaData.readNota(existing);
+
+  let existingVendor = await Vendor.findOne({ CNPJ: notaData.vendor.CNPJ });
+  if (!existingVendor) {
+    existingVendor = await Vendor.create({
+      CNPJ: notaData.vendor.CNPJ,
+      name: notaData.vendor.name,
+      address: notaData.vendor.address,
+    });
+  }
+
+  await existing.update({
+    status: 'read',
+    updatedAt: new Date(),
+    vendor: existingVendor,
+    purchaseDate: notaData.purchaseDate,
+    items: notaData.items,
+    total: notaData.total,
+    vendorName: existingVendor.name,
+  });
+
+  return { existing };
+};
+
+/**
+ * Get nota by id
+ * @param {ObjectId} id
+ * @returns {Promise<Nota>}
+ */
+const getNotaById = async (id) => {
+  const nota = await Nota.findById(id);
+  const vendor = await Vendor.findById(nota.vendor);
+  nota.vendor = vendor;
+  return nota;
+};
+
 module.exports = {
   checkNota,
   queryNotas,
+  loadNota,
+  getNotaById,
 };

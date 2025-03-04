@@ -8,6 +8,8 @@ const router = express.Router();
 
 router.post('/check', validate(notaValidation.checkNota), notaController.checkNota);
 router.get('/getAll', validate(notaValidation.getAll), notaController.getAll);
+router.get('/load', validate(notaValidation.loadNota), notaController.loadNota);
+router.get('/get/:id', validate(notaValidation.getNota), notaController.getNota);
 /*
 router.get('/getAll', validate(notaValidation.getnotas), notaController.getnotas);
 router.get('/:id', validate(notaValidation.getnota), notaController.getnota);
