@@ -36,7 +36,7 @@ const queryUsers = async (filter, options) => {
   const filterResults =
     parsedFilter.roles && parsedFilter.roles.length > 0
       ? { 'role.id': parsedFilter.roles.map((item) => item.id) }
-      : { 'role.id': [1, 2] };
+      : { 'role.id': [1, 2, 3, 4, 5, 6] };
   const adjustedOptions = {
     limit: parseInt(options.limit, 10),
     offset: (parseInt(options.page, 10) - 1) * parseInt(options.limit, 10),

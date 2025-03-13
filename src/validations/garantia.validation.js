@@ -52,6 +52,21 @@ const assignGarantia = {
     .min(1),
 };
 
+const qualityCheckGarantia = {
+  params: Joi.object().keys({
+    garantiaId: Joi.required().custom(objectId),
+  }),
+  body: Joi.object()
+    .keys({
+      brand: Joi.string().required(),
+      builtOn: Joi.string().required(),
+      description: Joi.string().required(),
+      sku: Joi.string().required(),
+      qualityCheck: Joi.object().required(),
+    })
+    .min(1),
+};
+
 const distributeGarantia = {
   params: Joi.object().keys({
     garantiaId: Joi.required().custom(objectId),
@@ -161,6 +176,7 @@ module.exports = {
   getGarantias,
   getGarantia,
   assignGarantia,
+  qualityCheckGarantia,
   distributeGarantia,
   sellGarantia,
   updateGarantia,

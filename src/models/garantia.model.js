@@ -20,6 +20,9 @@ const garantiaSchema = mongoose.Schema(
     assignedAt: {
       type: Date,
     },
+    qualityCheckedAt: {
+      type: Date,
+    },
     shippedAt: {
       type: Date,
     },
@@ -50,7 +53,7 @@ const garantiaSchema = mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      enum: ['created', 'assigned', 'shipped', 'delivered', 'cancelled', 'sold', 'registered'],
+      enum: ['created', 'assigned', 'qualityChecked', 'shipped', 'delivered', 'cancelled', 'sold', 'registered'],
       default: 'created',
     },
     phoneNumber: {
@@ -85,6 +88,9 @@ const garantiaSchema = mongoose.Schema(
     url: {
       type: String,
       trim: true,
+    },
+    qualityCheck: {
+      type: Object,
     },
   },
   {

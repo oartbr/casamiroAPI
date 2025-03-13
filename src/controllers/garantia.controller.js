@@ -80,6 +80,23 @@ const assign = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send(assignAction);
 });
 
+const qualityCheck = catchAsync(async (req, res) => {
+  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, req.body);
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
+  } else if (
+    garantia.status === 'shipped' ||
+    garantia.status === 'delivered' ||
+    garantia.status === 'cancelled' ||
+    garantia.status === 'sold' ||
+    garantia.status === 'registered'
+  ) {
+    throw new ApiError(httpStatus.LOCKED, 'Garantia already passed');
+  }
+  const qualityCheckAction = await garantiaService.qualityCheck(garantia, req.body);
+  res.status(httpStatus.OK).send(qualityCheckAction);
+});
+
 const getUser = catchAsync(async (req, res) => {
   const user = await garantiaService.getUserByGarantiaId(req.params.garantiaId);
 
@@ -130,6 +147,7 @@ const deleteGarantia = catchAsync(async (req, res) => {
 module.exports = {
   create,
   assign,
+  qualityCheck,
   getAvailable,
   getGarantia,
   getGarantias,

@@ -48,6 +48,35 @@ const assign = async (assignObj, body) => {
 };
 
 /**
+ * QualityCheck garantia - this updates the garantia with the details of the actual product
+ * @param {ObjectId} garantiaId
+ * @param {String} brand
+ * @param {string} description
+ * @param {string} sku
+ * @param {Object} qualityCheck
+ * @returns {Promise<garantia>}
+ */
+const qualityCheck = async (qualityCheckObj, body) => {
+  const garantia = await Garantia.findOne({ garantiaId: qualityCheckObj.garantiaId });
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'garantia not found');
+  } else {
+    garantia.brand = body.brand;
+    garantia.description = body.description;
+    garantia.sku = body.sku;
+    garantia.status = 'qualityChecked';
+    garantia.qualityCheck = body.qualityCheck;
+    garantia.qualityCheckedAt = Date.now();
+    if (garantia.assignedAt === undefined) {
+      garantia.assignedAt = Date.now();
+    }
+    await garantia.save();
+  }
+
+  return garantia;
+};
+
+/**
  * Query for garantia
  * @param {Object} filter - Mongo filter
  * @returns {Promise<QueryResult>}
@@ -220,6 +249,7 @@ const register = async (userData) => {
 module.exports = {
   create,
   assign,
+  qualityCheck,
   getGarantiaById,
   queryGarantias,
   updateGarantiaById,
