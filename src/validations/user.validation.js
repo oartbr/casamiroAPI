@@ -11,6 +11,7 @@ const createUser = {
     city: Joi.string(),
     zipcode: Joi.string(),
     phoneNumber: Joi.string(),
+    photo: Joi.string(),
     policy: Joi.array().items({
       id: Joi.string(),
       name: Joi.string(),
@@ -55,6 +56,7 @@ const updateUser = {
       }),
       password: Joi.string().custom(password),
       passwordConfirmation: Joi.string(),
+      email: Joi.string().email(),
     })
     .min(1),
 };
