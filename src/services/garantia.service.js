@@ -2,6 +2,7 @@ const httpStatus = require('http-status');
 const { Garantia } = require('../models');
 const { CheckPhoneNumber } = require('../models');
 const { User } = require('../models');
+const { Sku } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -87,6 +88,13 @@ const getGarantiaById = async (garantiaId, userId) => {
 
   // return garantia if it received userId and is the same as the garantia.userId or if it doesn't have a userId.
   if ((userId && user === userId) || (userId && !user) || (!userId && !user)) {
+    if (garantia.sku) {
+      const sku = await Sku.findOne({ skuId: garantia.sku });
+      if (sku) {
+        garantia.brand = sku.brand;
+        garantia.description = sku.description;
+      }
+    }
     return garantia;
   }
   // return unauthorized if the garantia has a userId and it's different from the userId received.

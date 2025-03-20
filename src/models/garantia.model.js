@@ -17,6 +17,9 @@ const garantiaSchema = mongoose.Schema(
     builtAt: {
       type: Date,
     },
+    printedAt: {
+      type: Date,
+    },
     assignedAt: {
       type: Date,
     },
@@ -91,6 +94,10 @@ const garantiaSchema = mongoose.Schema(
     },
     qualityCheck: {
       type: Object,
+    },
+    qualityResponsible: {
+      type: String,
+      trim: true,
     },
   },
   {
