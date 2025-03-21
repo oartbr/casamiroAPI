@@ -79,6 +79,7 @@
     "pdfkit": "^0.16.0",
     "pm2": "^5.1.0",
     "qrcode": "^1.5.4",
+    "svg-to-pdfkit": "^0.1.8",
     "swagger-jsdoc": "^6.0.8",
     "swagger-ui-express": "^4.1.6",
     "twilio": "^5.2.2",

@@ -24,8 +24,6 @@ const getCheckById = async (garantiaId) => {
   return CheckPhoneNumber.findOne({ garantiaId });
 };
 
-
-
 module.exports = {
   createCheck,
   getCheckById,

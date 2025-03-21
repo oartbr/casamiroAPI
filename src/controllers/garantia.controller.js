@@ -7,6 +7,7 @@ const { garantiaService } = require('../services');
 const CodeGenerator = require('../utils/generator');
 const { qrcodeService } = require('../services');
 const { filesService } = require('../services');
+const { printService } = require('../services');
 
 const create = catchAsync(async (req, res) => {
   const aGarantias = new CodeGenerator(req.body.length, req.body.type, req.body.prefix);
@@ -34,7 +35,15 @@ const create = catchAsync(async (req, res) => {
       }
     })
   );
-  res.status(httpStatus.CREATED).send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection });
+
+  const printFile = await printService.createPrint(newGarantias, res);
+
+  if (printFile === false) {
+    throw new ApiError(httpStatus.BAD_REQUEST, 'An error occurred while printing the garantias');
+  }
+  res
+    .status(httpStatus.CREATED)
+    .send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection, print: printFile });
 });
 
 const getAvailable = catchAsync(async (req, res) => {

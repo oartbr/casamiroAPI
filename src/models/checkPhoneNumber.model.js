@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
+const httpStatus = require('http-status');
 const { toJSON } = require('./plugins');
 const ApiError = require('../utils/ApiError');
-const httpStatus = require('http-status');
 
 const checkPhoneNumberSchema = mongoose.Schema(
   {
     garantiaId: {
       type: String,
-      default: "pending",
+      default: 'pending',
     },
     confirmed: {
       type: Boolean,
@@ -83,7 +83,7 @@ checkPhoneNumberSchema.statics.getCheckById = async function (garantiaId) {
  * @returns {Promise<boolean>}
  */
 checkPhoneNumberSchema.statics.confirmCode = async function (code, garantiaId) {
-  console.log({code, garantiaId});
+  // console.log({ code, garantiaId });
   const check = await this.findOne({ code, garantiaId });
   if (check === null) {
     await this.findOne({ garantiaId }).updateOne({ $inc: { count: 1 } });
