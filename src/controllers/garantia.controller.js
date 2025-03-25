@@ -36,14 +36,23 @@ const create = catchAsync(async (req, res) => {
     })
   );
 
-  const printFile = await printService.createPrint(newGarantias, res);
+  const printId = new CodeGenerator().code;
+  const printFile = await printService.createPrint(newGarantias, res, printId);
 
   if (printFile === false) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'An error occurred while printing the garantias');
   }
   res
     .status(httpStatus.CREATED)
-    .send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection, print: printFile });
+    .send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection, printId, print: printFile });
+});
+
+const getPdfFile = catchAsync(async (req, res) => {
+  const pdf = await printService.getPdfById(req.params.printId);
+  if (!pdf) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Pdf not found');
+  }
+  res.send(pdf);
 });
 
 const getAvailable = catchAsync(async (req, res) => {
@@ -153,6 +162,15 @@ const deleteGarantia = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send({ success: 'Garantia deleted' });
 });
 
+const getPdfs = catchAsync(async (req, res) => {
+  const pdfs = await printService.getPdfsByStatus(req.params.status);
+
+  if (!pdfs) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Pdfs not found');
+  }
+  res.send(pdfs);
+});
+
 module.exports = {
   create,
   assign,
@@ -166,4 +184,6 @@ module.exports = {
   getList,
   getListByUser,
   register,
+  getPdfs,
+  getPdfFile,
 };

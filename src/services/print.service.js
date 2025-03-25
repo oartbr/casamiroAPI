@@ -9,10 +9,12 @@ const { Print } = require('../models');
  * Post file
  * @returns {Promise<Files>}
  */
-const createPrint = async (files, res) => {
+const createPrint = async (files, res, printId) => {
   try {
     // Convert 10cm to points
     const pageSize = 283.5; // ~10cm in points
+
+    // console.log({ files });
 
     // Setup the PDF with a custom page size
     const doc = new PDFDocument({ size: [pageSize, pageSize] });
@@ -21,7 +23,7 @@ const createPrint = async (files, res) => {
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', async () => {
       const pdfBuffer = Buffer.concat(buffers);
-      const filename = `qr-codes-${Date.now()}.pdf`;
+      const filename = `pdf/qr-codes-${Date.now()}.pdf`;
 
       // Store PDF in Vercel Blob
       const { url } = await put(filename, pdfBuffer, {
@@ -30,7 +32,10 @@ const createPrint = async (files, res) => {
       // Return the URL for the caller (e.g., API response)
       return Print.create({
         url, // Save the URL in the database for future reference
-        createdAt: new Date(),
+        status: 'pending', // Update this status when the PDF is ready for download
+        quantity: files.length,
+        items: files.map((file) => file.id),
+        printId,
       });
     });
 
@@ -58,7 +63,7 @@ const createPrint = async (files, res) => {
 
     doc.end();
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    // console.error('Error generating PDF:', error);
     if (error instanceof ApiError) {
       res.status(error.statusCode).json({ error: error.message });
     } else {
@@ -67,6 +72,26 @@ const createPrint = async (files, res) => {
   }
 };
 
+/**
+ * Get pdfs by status
+ * @param {ObjectId} status
+ * @returns {Promise<Print>}
+ */
+const getPdfsByStatus = async (status) => {
+  return Print.find({ status }).sort({ createdAt: -1 });
+};
+
+/**
+ * Get pdfs by printId
+ * @param {ObjectId} status
+ * @returns {Promise<Print>}
+ */
+const getPdfById = async (printId) => {
+  return Print.findOne({ printId });
+};
+
 module.exports = {
   createPrint,
+  getPdfsByStatus,
+  getPdfById,
 };

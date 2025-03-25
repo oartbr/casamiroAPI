@@ -14,18 +14,34 @@ const printSchema = mongoose.Schema(
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'User',
     },
-    items: {
-      type: [String],
-    },
-    createdAt: {
-      type: Date,
-    },
+    items: [
+      {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Garantia',
+      },
+    ],
     printedAt: {
       type: Date,
+      select: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed'],
+      default: 'pending',
+      required: true,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+    printId: {
+      type: String,
+      required: true,
     },
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true }, // include virtuals (createdAt and updatedAt) in json output
   }
 );
 

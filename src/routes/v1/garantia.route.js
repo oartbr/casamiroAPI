@@ -13,6 +13,8 @@ const router = express.Router();
 router.post('/create', validate(garantiaValidation.create), garantiaController.create);
 router.get('/getAll', validate(garantiaValidation.getGarantias), garantiaController.getGarantias);
 router.get('/getAvailable', validate(garantiaValidation.getAvailable), garantiaController.getAvailable);
+router.get('/getPdfs/:status', validate(garantiaValidation.getPdfs), garantiaController.getPdfs);
+router.get('/getPdfFile/:printId', validate(garantiaValidation.getPdfFile), garantiaController.getPdfFile);
 router.post('/assign', validate(garantiaValidation.assign), garantiaController.assign);
 router.post('/register', validate(garantiaValidation.register), garantiaController.register);
 router.patch('/:garantiaId', validate(garantiaValidation.updateGarantia), garantiaController.updateGarantia);

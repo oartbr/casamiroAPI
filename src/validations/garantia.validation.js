@@ -153,6 +153,18 @@ const getListByUser = {
   }),
 };
 
+const getPdfs = {
+  params: Joi.object().keys({
+    status: Joi.string(),
+  }),
+};
+
+const getPdfFile = {
+  params: Joi.object().keys({
+    printId: Joi.string(),
+  }),
+};
+
 const register = {
   body: Joi.object().keys({
     garantiaId: Joi.string().required(),
@@ -185,4 +197,6 @@ module.exports = {
   getList,
   getListByUser,
   register,
+  getPdfs,
+  getPdfFile,
 };

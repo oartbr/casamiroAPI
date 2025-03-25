@@ -2,7 +2,7 @@ class CodeGenerator {
   code = "";
   chars = "";
 
-  constructor(length, type = "string", prefix = "") {
+  constructor(length = 7, type = "string", prefix = "") {
     this.length = length;
     this.type = type;
     this.prefix = prefix;
@@ -13,6 +13,7 @@ class CodeGenerator {
     
     this.collection = [];
     this.new();
+    return this;
   }
 
   new() {
