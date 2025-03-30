@@ -21,28 +21,24 @@ const createSku = async (skuBody) => {
  * @returns {Promise<QueryResult>}
  */
 const querySkus = async (filter, options) => {
-  const newOptions = { ...options, sortBy: options.sortBy };
-  const skus = await Sku.paginate(filter, newOptions);
-  return skus;
+  // const newOptions = { ...options, sortBy: options.sortBy };
+  // const skus = await Sku.paginate(filter, newOptions);
+  // return skus;
 
-  // console.log({ filterResults, adjustedOptions });
-  // const skus = await Sku.paginate(filterResults, adjustedOptions);
-  /*
   const parsedFilter = filter.filters ? JSON.parse(filter.filters) : { status: [] };
   const parsedSort = JSON.parse(options.sort);
   const filterResults =
-    parsedFilter.roles && parsedFilter.roles.length > 0
-      ? { 'role.id': parsedFilter.roles.map((item) => item.id) }
-      : { 'role.id': [1, 2] };
+    parsedFilter.status && parsedFilter.status.length > 0 ? { status: parsedFilter.status.map((item) => item.id) } : {};
   const adjustedOptions = {
     limit: parseInt(options.limit, 10),
     offset: (parseInt(options.page, 10) - 1) * parseInt(options.limit, 10),
     sortBy: parsedSort[0].order === 'desc' ? `{ -${parsedSort[0].orderBy}: -1 }` : `{ ${parsedSort[0].orderBy}: 1 }`,
+    page: parseInt(options.page, 10),
   };
-  
+  // console.log({ filterResults, adjustedOptions });
   const skus = await Sku.paginate(filterResults, adjustedOptions);
   skus.hasNextPage = skus.page < skus.totalPages;
-  return skus; */
+  return skus;
 };
 
 /**
