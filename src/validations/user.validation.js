@@ -53,6 +53,7 @@ const updateUser = {
       photo: Joi.string(),
       role: Joi.object().keys({
         id: Joi.number(),
+        name: Joi.string(),
       }),
       password: Joi.string().custom(password),
       passwordConfirmation: Joi.string(),
