@@ -54,6 +54,9 @@ const whatsSchema = mongoose.Schema(
     ApiVersion: {
       type: String,
     },
+    resp: {
+      type: String,
+    },
   },
   {
     timestamps: true,

@@ -159,7 +159,8 @@ const replyMessage = async (phoneNumber, message) => {
 const whatsIncoming = async (req, res, openAIKey) => {
   const whats = await Whats.create( req.body );
   // console.log({key: config.openAI.key});
-  const resp = await getChat(whats.body);
+  const resp = await getChat(whats.Body);
+  await whats.update({resp});
   const reply = await replyMessage(whats.From, resp);
   return {resp, reply};
 };
