@@ -7,6 +7,8 @@ const sendCodeWhatsApp = {
   }),
 };
 
+const whatsIncoming = {};
+
 const confirmCode = {
   body: Joi.object().keys({
     code: Joi.number(),
@@ -103,6 +105,7 @@ const deleteGarantia = {
 
 module.exports = {
   sendCodeWhatsApp,
+  whatsIncoming,
   confirmCode,
   getAvailable,
   getGarantias,

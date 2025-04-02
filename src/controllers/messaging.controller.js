@@ -3,6 +3,7 @@ const httpStatus = require('http-status');
 // const ApiError = require('../utils/ApiError');
 const catchAsync = require('../utils/catchAsync');
 const { sendMessage, sendMessageLogin, confirmWhatsCodeLogin } = require('../services/messaging.service');
+const { messagingService } = require('../services');
 const { tokenService } = require('../services');
 // const { createCheck } = require('../services/checkPhoneNumber.service');
 const CodeGenerator = require('../utils/generator');
@@ -49,10 +50,18 @@ const confirmCode = catchAsync(async (req, res) => {
   }
 });
 
+// whatsIncomming is a function that receives messages sent via whatsapp
+const whatsIncoming = catchAsync(async (req, res) => {
+  await messagingService.whatsIncoming(req, res).then(() => {
+    res.status(httpStatus.OK).send({ success: `${JSON.stringify(req.body)}` });
+  });
+});
+
 module.exports = {
   sendCodeWhatsApp,
   confirmCode,
   sendWhats,
+  whatsIncoming,
 };
 
 /* example:

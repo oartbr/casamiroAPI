@@ -6,6 +6,7 @@ const config = require('../config/config');
 // const { Garantia } = require('../models');
 const { CheckPhoneNumber } = require('../models');
 const { User } = require('../models');
+const { Whats } = require('../models');
 
 const messagingClient = new Twilio(config.twilio.accountSid, config.twilio.authToken);
 
@@ -135,9 +136,16 @@ const sendMessageLogin = async (phoneNumber, message) => {
   // return true;
 };
 
+const whatsIncoming = async (req, res) => {
+  const whats = await Whats.create({ body: JSON.stringify(req.body) });
+
+  return true;
+};
+
 module.exports = {
   sendMessage,
   confirmWhatsCode,
   sendMessageLogin,
   confirmWhatsCodeLogin,
+  whatsIncoming,
 };
