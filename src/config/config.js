@@ -80,4 +80,7 @@ module.exports = {
     primary: process.env.PRIMARY_COLOR,
     secondary: process.env.SECONDARY_COLOR,
   },
+  openAI: {
+    key: process.env.OPENAI_API_KEY,
+  }
 };

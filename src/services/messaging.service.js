@@ -136,11 +136,53 @@ const sendMessageLogin = async (phoneNumber, message) => {
   // return true;
 };
 
-const whatsIncoming = async (req, res) => {
-  const whats = await Whats.create( req.body );
+const replyMessage = async (phoneNumber, message) => {
+  const toPhoneNumber = `${phoneNumber}`;
 
-  return whats;
+  try {
+    const response = await messagingClient.messages
+      .create({
+        body: message,
+        from: config.twilio.phoneNumber,
+        to: toPhoneNumber,
+      })
+      .then(() => {
+        // console.log(mess);
+      });
+    return response;
+  } catch (error) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Failed to send Message: ${error.message}`);
+  }
+  return true;
 };
+
+const whatsIncoming = async (req, res, openAIKey) => {
+  const whats = await Whats.create( req.body );
+  // console.log({key: config.openAI.key});
+  const resp = await getChat(whats.body);
+  const reply = await replyMessage(whats.From, resp);
+  return {resp, reply};
+};
+
+const getChat = async (prompt) => {
+  const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
+  const apiUrl = "https://api.openai.com/v1/chat/completions";
+
+  const response = await fetch(apiUrl, {
+  method: "POST",
+  headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+  },
+  body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [{ role: 'user', temperature: 0.9, content: prompt + ". Responda de forma corta y puntual, demostrando que sabe del asunto."}],
+  }),
+  });
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
 
 module.exports = {
   sendMessage,
