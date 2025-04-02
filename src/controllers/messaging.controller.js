@@ -52,8 +52,8 @@ const confirmCode = catchAsync(async (req, res) => {
 
 // whatsIncomming is a function that receives messages sent via whatsapp
 const whatsIncoming = catchAsync(async (req, res) => {
-  await messagingService.whatsIncoming(req, res).then(() => {
-    res.status(httpStatus.OK).send({ success: `${JSON.stringify(req.body)}` });
+  await messagingService.whatsIncoming(req, res).then((resp) => {
+    res.status(httpStatus.OK).send();
   });
 });
 
@@ -75,3 +75,4 @@ commClient.messages
 
 export default { commClient };
 */
+

@@ -137,9 +137,9 @@ const sendMessageLogin = async (phoneNumber, message) => {
 };
 
 const whatsIncoming = async (req, res) => {
-  const whats = await Whats.create({ body: JSON.stringify(req.body) });
+  const whats = await Whats.create( req.body );
 
-  return true;
+  return whats;
 };
 
 module.exports = {

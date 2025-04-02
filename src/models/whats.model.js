@@ -6,7 +6,52 @@ const { toJSON } = require('./plugins');
 
 const whatsSchema = mongoose.Schema(
   {
-    body: {
+    SmsMessageSid: {
+      type: String,
+    },
+    NumMedia: {
+      type: String,
+    },
+    ProfileName: {
+      type: String,
+    },
+    MessageType: {
+      type: String,
+    },
+    SmsSid: {
+      type: String,
+    },
+    WaId: {
+      type: String,
+    },
+    SmsStatus: {
+      type: String,
+    },
+    Body: {
+      type: String,
+    },
+    To: {
+      type: String,
+    },
+    MessagingServiceSid: {
+      type: String,
+    },
+    NumSegments: {
+      type: String,
+    },
+    ReferralNumMedia: {
+      type: String,
+    },
+    MessageSid: {
+      type: String,
+    },
+    AccountSid: {
+      type: String,
+    },
+    From: {
+      type: String,
+    },
+    ApiVersion: {
       type: String,
     },
   },

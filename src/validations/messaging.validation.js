@@ -7,7 +7,26 @@ const sendCodeWhatsApp = {
   }),
 };
 
-const whatsIncoming = {};
+const whatsIncoming = {
+  body: Joi.object().keys({
+    SmsMessageSid: Joi.string().required(),
+    NumMedia: Joi.string().required(),
+    ProfileName: Joi.string().required(),
+    MessageType: Joi.string().required(),
+    SmsSid: Joi.string().required(),
+    WaId: Joi.string().required(),
+    SmsStatus: Joi.string().required(),
+    Body: Joi.string().required(),
+    To: Joi.string().required(),
+    MessagingServiceSid: Joi.string().required(),
+    NumSegments: Joi.string().required(),
+    ReferralNumMedia: Joi.string().required(),
+    MessageSid: Joi.string().required(),
+    AccountSid: Joi.string().required(),
+    From: Joi.string().required(),
+    ApiVersion: Joi.string().required(),
+  }),
+};
 
 const confirmCode = {
   body: Joi.object().keys({
