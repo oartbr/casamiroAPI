@@ -82,5 +82,6 @@ module.exports = {
   },
   openAI: {
     key: process.env.OPENAI_API_KEY,
+    assistantKey: process.env.OPENAI_ASSISTANT_KEY,
   }
 };

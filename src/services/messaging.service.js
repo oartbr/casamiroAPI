@@ -7,6 +7,7 @@ const config = require('../config/config');
 const { CheckPhoneNumber } = require('../models');
 const { User } = require('../models');
 const { Whats } = require('../models');
+const { agent } = require('supertest');
 
 const messagingClient = new Twilio(config.twilio.accountSid, config.twilio.authToken);
 
@@ -156,14 +157,198 @@ const replyMessage = async (phoneNumber, message) => {
   return true;
 };
 
-const whatsIncoming = async (req, res, openAIKey) => {
-  const whats = await Whats.create( req.body );
+const whatsIncoming = async (req, res) => {
+  // Step 1: Validate incoming request and check if it is an existing thread
+  let thread = await Whats.findOne({ phoneNumber: req.body.WaId });
+  let message = req.body.Body;
+
+  // Step 2: create a new thread if it doesn't exist
+  if (!thread) {
+    thread = await getThread().then((resp) => {
+                      Whats.create({
+                        phoneNumber: req.body.WaId,
+                        threadId: resp,
+                      });
+                      
+    });    
+  }
+  
+  let assistantRun = "";
+  // Step 3: Add message to thread
+  await addMessagetoThread(message, thread.threadId).then((resp) => {
+    
+  });
+
+  // Step 4: Run the assistant
+  await runAssistant(message, thread.threadId).then((resp) => {
+    assistantRun = resp;
+  }).catch((err) => {
+    console.log(err);
+    return { message: err.message };
+  });
+
+  
+
+  // Step 5: Poll for run completion
+  let runStatus;
+  do {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+    runStatus = await retrieveStatus(assistantRun, thread.threadId).then((status) => {
+      return status;
+    }
+    ).catch((err) => {
+      console.log(err);
+      return { message: err.message };
+    });
+  } while (runStatus !== 'completed');
+
+  // Step 6: Retrieve messages from the thread
+  let agentReply= "";
+  await retrieveMessages(thread.threadId).then((resp) => {
+    agentReply = resp.data.find(msg => msg.role === 'assistant')?.content[0].text.value;
+  });
+
+  // Step 7: Send the reply back to the user
+  const replyMess = await replyMessage(req.body.From, agentReply).then((resp) => {
+    return resp;
+  }).catch((err) => {
+    console.log(err);
+    return { message: err.message };
+  }
+  );
+  // Step 8: Update the thread with the response
+  await thread.update({ lastReply: agentReply });
+  // Step 9: Return the response
+
+  return { agentReply };
+  
+  
+  /*const whats = await Whats.create( req.body );
   // console.log({key: config.openAI.key});
   const resp = await getChat(whats.Body);
   await whats.update({resp});
   const reply = await replyMessage(whats.From, resp);
-  return {resp, reply};
+  return {resp, reply};*/
 };
+
+const getAssistant = async (prompt) => {
+  const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
+  const assistantkey =  config.openAI.assistantKey; // to-do list... get the OpenAI API key
+  const apiUrl = `https://api.openai.com/v1/assistants/${assistantkey}`;
+
+  try {
+    const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`,
+            "OpenAI-Beta": "assistants=v2"
+        }
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+      throw new ApiError(httpStatus.BAD_REQUEST, `Failed to fetch Assistant: ${error.message}`);
+  }
+
+};
+
+const getThread = async () => {
+  const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
+  const assistantkey =  config.openAI.assistantKey; // to-do list... get the OpenAI API key
+  const apiUrl = "https://api.openai.com/v1/threads";
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "OpenAI-Beta": "assistants=v2",
+    }
+  });
+  
+  const data = await response.json();
+  return data.id;
+};
+
+const addMessagetoThread = async (message, thread_id) => {
+  const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
+  const assistantkey =  config.openAI.assistantKey; // to-do list... get the OpenAI API key
+  const apiUrl = `https://api.openai.com/v1/threads/${thread_id}/messages`;
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "OpenAI-Beta": "assistants=v2",
+    },
+    body: JSON.stringify({
+        role: 'user', content: message,
+    }),
+  });
+
+  return response;
+};
+
+const runAssistant = async (message, thread_id) => {
+  const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
+  const assistantkey =  config.openAI.assistantKey; // to-do list... get the OpenAI API key
+  const apiUrl = `https://api.openai.com/v1/threads/${thread_id}/runs`;
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "OpenAI-Beta": "assistants=v2",
+    },
+    body: JSON.stringify({
+      "assistant_id": assistantkey,
+    }),
+
+
+  });
+
+  const data = await response.json();
+  return data.id;
+}
+
+const retrieveStatus = async (run_id, thread_id) => {
+  const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
+  const assistantkey =  config.openAI.assistantKey; // to-do list... get the OpenAI API key
+  const apiUrl = `https://api.openai.com/v1/threads/${thread_id}/runs/${run_id}`;
+
+  const response = await fetch(apiUrl, {
+    method: "GET",
+    headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "OpenAI-Beta": "assistants=v2",
+    },
+  });
+
+  const data = await response.json();
+  return data.status;
+}
+
+const retrieveMessages = async (thread_id) => {
+  const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
+  const assistantkey =  config.openAI.assistantKey; // to-do list... get the OpenAI API key
+  const apiUrl = `https://api.openai.com/v1/threads/${thread_id}/messages`;
+
+  const response = await fetch(apiUrl, {
+    method: "GET",
+    headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "OpenAI-Beta": "assistants=v2",
+    },
+  });
+
+  const data = await response.json();
+  return data;
+}
 
 const getChat = async (prompt) => {
   const apiKey =  config.openAI.key; // to-do list... get the OpenAI API key
@@ -191,4 +376,10 @@ module.exports = {
   sendMessageLogin,
   confirmWhatsCodeLogin,
   whatsIncoming,
+  getAssistant,
+  getThread,
+  addMessagetoThread,
+  runAssistant,
+  retrieveStatus,
+  retrieveMessages,
 };
