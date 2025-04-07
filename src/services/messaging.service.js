@@ -191,8 +191,10 @@ const whatsIncoming = async (req, res) => {
 
   // Step 5: Poll for run completion
   let runStatus;
+  let startTime = 0;
   do {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 1s
+    startTime++;
     runStatus = await retrieveStatus(assistantRun, thread.threadId).then((status) => {
       return status;
     }
@@ -220,7 +222,7 @@ const whatsIncoming = async (req, res) => {
   await thread.update({ lastReply: agentReply });
   // Step 9: Return the response
 
-  return { agentReply };
+  return { agentReply, replyMess, startTime };
   
   
   /*const whats = await Whats.create( req.body );
@@ -370,6 +372,8 @@ const getChat = async (prompt) => {
   return data.choices[0].message.content;
 }
 
+const maxDuration = 60; // Set to 60 seconds
+
 module.exports = {
   sendMessage,
   confirmWhatsCode,
@@ -382,4 +386,5 @@ module.exports = {
   runAssistant,
   retrieveStatus,
   retrieveMessages,
+  maxDuration,
 };
