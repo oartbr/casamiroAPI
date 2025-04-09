@@ -11,9 +11,5 @@
       "src": "/(.*)",
       "dest": "src/index.js"
     }
-  ],
-  "crons": [{
-      "path": "/v1/cron/refreshQueue",
-      "schedule": "*/10 * * * *"
-    }]
+  ]
 }
