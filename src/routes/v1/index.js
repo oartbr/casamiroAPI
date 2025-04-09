@@ -8,8 +8,10 @@ const filesRoute = require('./files.route');
 const qrcodeRoute = require('./qrcode.route');
 const skuRoute = require('./sku.route');
 const callRoute = require('./call.route');
+const cronRoute = require('./cron.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
+
 
 const router = express.Router();
 
@@ -45,6 +47,10 @@ const defaultRoutes = [
   {
     path: '/call',
     route: callRoute,
+  },
+  {
+    path: '/cron',
+    route: cronRoute,
   },
 ];
 

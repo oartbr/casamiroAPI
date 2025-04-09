@@ -191,18 +191,37 @@ const whatsIncoming = async (req, res) => {
 
   // Step 5: Poll for run completion
   let runStatus;
-  let startTime = 0;
+  let delayTime = 0;
+  const maxDuration = 9;
   do {
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 1s
-    startTime++;
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+    delayTime++;
     runStatus = await retrieveStatus(assistantRun, thread.threadId).then((status) => {
+      console.log({caca: status});
       return status;
-    }
-    ).catch((err) => {
+    }).catch((err) => {
+      console.log(err);
+      thread.updateOne({ runStatus: err.message, requestDelay: delayTime });
+      return { message: err.message };
+    });
+    
+  } while (runStatus !== 'completed' && delayTime < maxDuration);
+  
+  await thread.updateOne({ runStatus: runStatus, requestDelay: delayTime, runId: assistantRun, status: 'active' });
+  
+  // Check if the run was successful
+  if (runStatus !== 'completed') {
+    console.log('Run failed or timed out');
+    const agentReply = "Deme un minuto, voy a consultar.";
+    const replyMess = await replyMessage(req.body.From, agentReply).then((resp) => {
+      return resp;
+    }).catch((err) => {
       console.log(err);
       return { message: err.message };
     });
-  } while (runStatus !== 'completed');
+    await thread.updateOne({ status: 'incomplete'  });
+    return { agentReply, replyMess, delayTime };
+  }
 
   // Step 6: Retrieve messages from the thread
   let agentReply= "";
@@ -216,13 +235,12 @@ const whatsIncoming = async (req, res) => {
   }).catch((err) => {
     console.log(err);
     return { message: err.message };
-  }
-  );
+  });
   // Step 8: Update the thread with the response
-  await thread.update({ lastReply: agentReply });
+  await thread.updateOne({ lastReply: agentReply, status: 'ok' });
   // Step 9: Return the response
 
-  return { agentReply, replyMess, startTime };
+  return { agentReply, replyMess, delayTime };
   
   
   /*const whats = await Whats.create( req.body );
@@ -372,6 +390,80 @@ const getChat = async (prompt) => {
   return data.choices[0].message.content;
 }
 
+const runPendingThread = async (thread, runId, threadId) => {
+  // Step 5: Poll for run completion
+  let runStatus;
+  let delayTime = 0;
+  const maxDuration = 9;
+  do {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+    delayTime++;
+    runStatus = await retrieveStatus(runId, threadId).then((status) => {
+      return status;
+    }).catch((err) => {
+      console.log(err);
+      return { message: err.message };
+    });
+    
+  } while (runStatus !== 'completed' && delayTime < maxDuration);
+  
+  await thread.updateOne({ runStatus: runStatus, requestDelay: delayTime, runId: runId, status: 'active' });
+  
+  // Check if the run was successful
+  if (runStatus !== 'completed') {
+    console.log('Run failed or timed out');
+    const agentReply = "Esto no és muy común, voy a pedir ayuda a mi superior.";
+    const replyMess = await replyMessage(`whatsapp:+${thread.phoneNumber}`, agentReply).then((resp) => {
+      return resp;
+    }).catch((err) => {
+      console.log(err);
+      return { message: err.message };
+    });
+    await thread.updateOne({ status: 'incomplete'  });
+    return { agentReply, replyMess, delayTime };
+  }
+
+  // Step 6: Retrieve messages from the thread
+  let agentReply= "";
+  await retrieveMessages(thread.threadId).then((resp) => {
+    agentReply = resp.data.find(msg => msg.role === 'assistant')?.content[0].text.value;
+  });
+
+  // Step 7: Send the reply back to the user
+  const replyMess = await replyMessage(`whatsapp:+${thread.phoneNumber}`, agentReply).then((resp) => {
+    return resp;
+  }).catch((err) => {
+    console.log(err);
+    return { message: err.message };
+  });
+  // Step 8: Update the thread with the response
+  await thread.updateOne({ lastReply: agentReply, status: 'ok' });
+  // Step 9: Return the response
+
+  return { agentReply, replyMess, delayTime };
+};
+
+
+const refreshWhatsQueue = async (req, res) => {
+  // Check if there are any pending messages on the Whats queue
+  const pendingThread = await Whats.findOne({ runStatus: 'in_progress', status: 'incomplete' });
+
+  if (!pendingThread) {
+    console.log(pendingThread);
+    return { message: "No pending threads" };
+  } else {
+    runPendingThread(pendingThread, pendingThread.runId, pendingThread.threadId).then((resp) => {
+      return resp;
+    }
+    ).catch((err) => {
+      console.log(err);
+      return { message: err.message };
+    });
+    return { message: "Pending threads found" };
+  }
+  
+}
+
 const maxDuration = 60; // Set to 60 seconds
 
 module.exports = {
@@ -386,5 +478,7 @@ module.exports = {
   runAssistant,
   retrieveStatus,
   retrieveMessages,
+  refreshWhatsQueue,
+  runPendingThread,
   maxDuration,
 };

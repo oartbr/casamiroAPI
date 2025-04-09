@@ -57,11 +57,19 @@ const whatsIncoming = catchAsync(async (req, res) => {
   });
 });
 
+// Check if there are any pending messages on the Whats queue, if so, get assistant messages and return them.
+const refreshWhatsQueue = catchAsync(async (req, res) => {
+  await messagingService.refreshWhatsQueue(req, res).then((resp) => {
+    res.status(httpStatus.OK).send(resp);
+  });
+});
+
 module.exports = {
   sendCodeWhatsApp,
   confirmCode,
   sendWhats,
   whatsIncoming,
+  refreshWhatsQueue,
 };
 
 /* example:

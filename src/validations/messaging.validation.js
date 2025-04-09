@@ -122,6 +122,12 @@ const deleteGarantia = {
   }),
 };
 
+const refreshQueue = {
+  params: Joi.object().keys({
+    status: Joi.string(),
+  }),
+};
+
 module.exports = {
   sendCodeWhatsApp,
   whatsIncoming,
@@ -134,4 +140,5 @@ module.exports = {
   sellGarantia,
   updateGarantia,
   deleteGarantia,
+  refreshQueue,
 };
