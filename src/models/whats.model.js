@@ -9,7 +9,7 @@ const whatsSchema = mongoose.Schema(
   {
     phoneNumber: { type: String, required: true, unique: true },
     threadId: { type: String, required: true },
-    runId: { type: String, required: true  },
+    runId: { type: String },
     lastReply: { type: String },
     runStatus: { type: String },
     requestDelay: { type: Number },

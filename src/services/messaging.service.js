@@ -165,11 +165,10 @@ const whatsIncoming = async (req, res) => {
   // Step 2: create a new thread if it doesn't exist
   if (!thread) {
     thread = await getThread().then((resp) => {
-                      Whats.create({
+                      return Whats.create({
                         phoneNumber: req.body.WaId,
                         threadId: resp,
-                      });
-                      
+                      });                      
     });    
   }
   
