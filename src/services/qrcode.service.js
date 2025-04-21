@@ -21,7 +21,7 @@ const getQRcode = async (content) => {
  * @param {string} logoUrl - The URL of the logo to embed.
  * @returns {Promise<string>} - A promise that resolves to the generated QR code with logo as a string.
  */
-const insertLogo = async (QRcode, logoUrl) => {
+const insertLogo = async (QRcode, logoBG) => {
   // Load the QR code SVG into JSDOM
   const dom = new JSDOM(QRcode);
   const { document } = dom.window;
@@ -32,8 +32,7 @@ const insertLogo = async (QRcode, logoUrl) => {
   const qrSVG = svgElem.cloneNode(true);
 
   // Fetch the logo SVG.
-  const { data: logoData } = await axios.get(logoUrl);
-  const logoDom = new JSDOM(logoData);
+  const logoDom = new JSDOM(logoBG);
   const logoSvg = logoDom.window.document.querySelector('svg');
 
   // Use logo dimensions for setting up the area.
@@ -139,8 +138,19 @@ const insertText = (svgString, textContent) => {
   return svgElem.outerHTML;
 };
 
+/**
+ * get logo BG from file system.
+ * @param {string} logoUrl - The URL of the logo to embed.
+ * @returns {Promise<string>} - A promise that resolves to the generated QR code with logo as a string.
+ */
+const loadImage = async (logoUrl) => {
+  const { data: logoData } = await axios.get(logoUrl);
+  return logoData;
+};
+
 module.exports = {
   getQRcode,
   insertLogo,
   insertText,
+  loadImage,
 };

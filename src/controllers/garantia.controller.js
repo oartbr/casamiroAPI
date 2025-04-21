@@ -15,11 +15,14 @@ const create = catchAsync(async (req, res) => {
 
   const newGarantias = [];
 
+  // Get the QRcode logo and BG images
+  const logoBG = await qrcodeService.loadImage(process.env.COMPANY_LOGO);
+
   await Promise.all(
     aGarantias.collection.map(async (code) => {
       const qrCode = await qrcodeService.getQRcode(`${process.env.CORS_ORIGIN}/${code}`);
       const withCode = await qrcodeService.insertText(qrCode, code);
-      const finalQR = await qrcodeService.insertLogo(withCode, process.env.COMPANY_LOGO);
+      const finalQR = await qrcodeService.insertLogo(withCode, logoBG);
       const fileUpload = await filesService.postQRcode(finalQR, code, 'garantias');
       const newGarantia = await garantiaService.create({
         garantiaId: code,
