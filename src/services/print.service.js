@@ -12,12 +12,12 @@ const { Print } = require('../models');
 const createPrint = async (files, res, printId) => {
   try {
     // Convert 10cm to points
-    const pageSize = 283.5; // ~10cm in points
+    const pageSize = { width: 187.875 * 2, height: 136.175 * 2 }; // ~10cm in points
 
     // console.log({ files });
 
     // Setup the PDF with a custom page size
-    const doc = new PDFDocument({ size: [pageSize, pageSize] });
+    const doc = new PDFDocument({ size: [pageSize.width, pageSize.height] });
     const buffers = [];
 
     doc.on('data', buffers.push.bind(buffers));
@@ -51,8 +51,8 @@ const createPrint = async (files, res, printId) => {
     // Add each SVG to the PDF using svg-to-pdfkit
     svgDataArray.forEach((svgData, index) => {
       SVGtoPDF(doc, svgData, 0, 0, {
-        width: pageSize,
-        height: pageSize,
+        width: pageSize.width,
+        height: pageSize.height,
         preserveAspectRatio: 'none', // Use 'none' to fill the page, or another value if needed
       });
       // Add a new page for all SVGs except the last one
