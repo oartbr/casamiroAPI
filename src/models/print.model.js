@@ -7,7 +7,6 @@ const printSchema = mongoose.Schema(
   {
     url: {
       type: String,
-      required: true,
       index: true,
     },
     user: {
@@ -32,7 +31,6 @@ const printSchema = mongoose.Schema(
     },
     quantity: {
       type: Number,
-      required: true,
     },
     printId: {
       type: String,

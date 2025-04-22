@@ -14,6 +14,8 @@ const create = catchAsync(async (req, res) => {
   aGarantias.create(req.body.quantity);
 
   const newGarantias = [];
+  const printId = new CodeGenerator().code;
+  const printObj = await printService.createPrint(printId); // create a new Print entry in the database
 
   // Get the QRcode logo and BG images
   const logoBG = await qrcodeService.loadImage(process.env.COMPANY_LOGO);
@@ -30,9 +32,12 @@ const create = catchAsync(async (req, res) => {
         description: '',
         sku: '',
         url: fileUpload.url,
+        printId,
       });
 
       newGarantias.push(newGarantia);
+
+      printObj.items.push(newGarantia.id); // insert the new garantia id into the print object
 
       if (newGarantia === false) {
         throw new ApiError(httpStatus.BAD_REQUEST, `An error occurred while creating the garantias: ${newGarantias.length}`);
@@ -40,15 +45,17 @@ const create = catchAsync(async (req, res) => {
     })
   );
 
-  const printId = new CodeGenerator().code;
-  const printFile = printService.createPrint(newGarantias, res, printId);
+  printObj.quantity = newGarantias.length; // set the quantity of garantias in the print object
+  await printObj.save(); // save the print object with the new garantia ids
+
+  /* const printFile = printService.createPdf(newGarantias, res, printId);
 
   if (printFile === false) {
     // throw new ApiError(httpStatus.BAD_REQUEST, 'An error occurred while printing the garantias');
-  }
+  } */
   res
     .status(httpStatus.CREATED)
-    .send({ newGarantias, quantity: newGarantias.length, garantias: aGarantias.collection, printId, print: printFile });
+    .send({ quantity: newGarantias.length, garantias: aGarantias.collection, printId, print: printObj });
 });
 
 const getPdfFile = catchAsync(async (req, res) => {

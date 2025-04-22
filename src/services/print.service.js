@@ -9,7 +9,7 @@ const { Print } = require('../models');
  * Post file
  * @returns {Promise<Files>}
  */
-const createPrint = async (files, res, printId) => {
+const createPdf = async (files, res, printId) => {
   try {
     // Convert 10cm to points
     const pageSize = { width: 187.875 * 2, height: 136.175 * 2 }; // ~10cm in points
@@ -73,6 +73,19 @@ const createPrint = async (files, res, printId) => {
 };
 
 /**
+ * Create Print file
+ * @returns {Print}
+ */
+const createPrint = async (printId) => {
+  // create a new print entry in the database
+  const newPrint = await Print.create({
+    status: 'pending', // Update this status when the PDF is ready for download
+    printId,
+  });
+  return newPrint;
+};
+
+/**
  * Get pdfs by status
  * @param {ObjectId} status
  * @returns {Promise<Print>}
@@ -94,4 +107,5 @@ module.exports = {
   createPrint,
   getPdfsByStatus,
   getPdfById,
+  createPdf,
 };

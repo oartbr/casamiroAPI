@@ -99,6 +99,9 @@ const garantiaSchema = mongoose.Schema(
       type: String,
       trim: true,
     },
+    printId: {
+      type: String,
+    },
   },
   {
     timestamps: true,
