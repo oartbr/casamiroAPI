@@ -41,10 +41,10 @@ const create = catchAsync(async (req, res) => {
   );
 
   const printId = new CodeGenerator().code;
-  const printFile = await printService.createPrint(newGarantias, res, printId);
+  const printFile = printService.createPrint(newGarantias, res, printId);
 
   if (printFile === false) {
-    throw new ApiError(httpStatus.BAD_REQUEST, 'An error occurred while printing the garantias');
+    // throw new ApiError(httpStatus.BAD_REQUEST, 'An error occurred while printing the garantias');
   }
   res
     .status(httpStatus.CREATED)
