@@ -463,8 +463,6 @@ const refreshWhatsQueue = async (req, res) => {
   
 }
 
-const maxDuration = 60; // Set to 60 seconds
-
 module.exports = {
   sendMessage,
   confirmWhatsCode,
@@ -479,5 +477,7 @@ module.exports = {
   retrieveMessages,
   refreshWhatsQueue,
   runPendingThread,
-  maxDuration,
+  config: {
+    maxDuration: 50,
+  },
 };
