@@ -33,8 +33,8 @@ const insertLogo = async (QRcode, logoBG) => {
   const logoSvg = logoDom.window.document.querySelector('svg');
 
   // Use logo dimensions for setting up the area.
-  const svgWidth = parseFloat(logoSvg.getAttribute('width')) || 1000;
-  const svgHeight = parseFloat(logoSvg.getAttribute('height')) || 1000;
+  const svgWidth = 187.875;
+  const svgHeight = 136.175;
   // If no explicit width/height, implement viewBox to default.
 
   // Update the original QR code SVG dimensions and viewBox.
@@ -42,7 +42,7 @@ const insertLogo = async (QRcode, logoBG) => {
   qrElem.setAttribute('y', '0%');
   qrElem.setAttribute('width', svgWidth);
   qrElem.setAttribute('height', svgHeight);
-  qrElem.setAttribute('viewBox', `2 -3 ${svgWidth * 0.4} ${svgHeight * 0.4}`);
+  qrElem.setAttribute('viewBox', `2 -3 ${svgWidth * 0.39} ${svgHeight * 0.39}`);
   qrElem.setAttribute('preserveAspectRatio', 'xMinYMin meet');
   // console.log(`New dimensions: width=${svgWidth}, height=${svgHeight}`);
 
