@@ -42,7 +42,7 @@ const insertLogo = async (QRcode, logoBG) => {
   qrElem.setAttribute('y', '0%');
   qrElem.setAttribute('width', svgWidth);
   qrElem.setAttribute('height', svgHeight);
-  qrElem.setAttribute('viewBox', `2 -3 ${svgWidth * 0.39} ${svgHeight * 0.39}`);
+  qrElem.setAttribute('viewBox', `2 -3 ${svgWidth * 0.37} ${svgHeight * 0.37}`);
   qrElem.setAttribute('preserveAspectRatio', 'xMinYMin meet');
   // console.log(`New dimensions: width=${svgWidth}, height=${svgHeight}`);
 
