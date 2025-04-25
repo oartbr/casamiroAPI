@@ -395,7 +395,7 @@ const runPendingThread = async (thread, runId, threadId) => {
   let delayTime = 0;
   const maxDuration = 9;
   do {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
+    await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 1s
     delayTime++;
     runStatus = await retrieveStatus(runId, threadId).then((status) => {
       return status;
