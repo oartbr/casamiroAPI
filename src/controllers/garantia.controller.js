@@ -37,7 +37,7 @@ const create = catchAsync(async (req, res) => {
 
       newGarantias.push(newGarantia);
 
-      printObj.items.push(newGarantia.id); // insert the new garantia id into the print object
+      printObj.items.push(newGarantia.url); // insert the new garantia id into the print object
 
       if (newGarantia === false) {
         throw new ApiError(httpStatus.BAD_REQUEST, `An error occurred while creating the garantias: ${newGarantias.length}`);
@@ -59,7 +59,7 @@ const create = catchAsync(async (req, res) => {
 });
 
 const getPdfFile = catchAsync(async (req, res) => {
-  const pdf = await printService.getPdfById(req.params.printId);
+  const pdf = await printService.getPdfById(req.params.printId, res); // this returns a Print object with the items and other info
   if (!pdf) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Pdf not found');
   }

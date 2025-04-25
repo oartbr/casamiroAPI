@@ -7,7 +7,6 @@ const printSchema = mongoose.Schema(
   {
     url: {
       type: String,
-      index: true,
     },
     user: {
       type: mongoose.SchemaTypes.ObjectId,
@@ -15,8 +14,7 @@ const printSchema = mongoose.Schema(
     },
     items: [
       {
-        type: mongoose.SchemaTypes.ObjectId,
-        ref: 'Garantia',
+        type: String,
       },
     ],
     printedAt: {
@@ -25,7 +23,7 @@ const printSchema = mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['pending', 'completed'],
+      enum: ['pending', 'created', 'processing', 'completed', 'printed', 'error'],
       default: 'pending',
       required: true,
     },
