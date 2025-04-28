@@ -8,8 +8,32 @@ const { CheckPhoneNumber } = require('../models');
 const { User } = require('../models');
 const { Whats } = require('../models');
 const { agent } = require('supertest');
+const { func } = require('joi');
 
 const messagingClient = new Twilio(config.twilio.accountSid, config.twilio.authToken);
+
+const functionMap = { // this is for using with openAI function calling
+  "get_today_date": async () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    console.log({ date: `${day}/${month}/${year}` });
+    return { date: `${day}/${month}/${year}` };
+  },
+  "get_product_properties": async (capacity) => { // expect a number, which is the capacity of the product in liters
+    // do something!!!
+    return {
+      capacidad: product_capacity,
+      tipo: "product",
+      sku: "brand",
+      plazo_de_entrega: "model",
+      precio: "sku",
+      valor_entrega: "xxx",
+      descripcion: "description",
+    };
+  },
+};
 
 const confirmWhatsCode = async (code, garantiaId) => {
   const confirmPhoneNumberCode = await CheckPhoneNumber.confirmCode(code, garantiaId);
@@ -186,8 +210,6 @@ const whatsIncoming = async (req, res) => {
     return { message: err.message };
   });
 
-  
-
   // Step 5: Poll for run completion
   let runStatus;
   let delayTime = 0;
@@ -195,8 +217,9 @@ const whatsIncoming = async (req, res) => {
   do {
     await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s
     delayTime++;
+    
     runStatus = await retrieveStatus(assistantRun, thread.threadId).then((status) => {
-      console.log({caca: status});
+      console.log({caca: status, delayTime});
       return status;
     }).catch((err) => {
       console.log(err);
@@ -204,12 +227,12 @@ const whatsIncoming = async (req, res) => {
       return { message: err.message };
     });
     
-  } while (runStatus !== 'completed' && delayTime < maxDuration);
+  } while (runStatus !== 'completed' && runStatus !== 'requires_action' && delayTime < maxDuration);
   
   await thread.updateOne({ runStatus: runStatus, requestDelay: delayTime, runId: assistantRun, status: 'active' });
   
   // Check if the run was successful
-  if (runStatus !== 'completed') {
+  if (runStatus !== 'completed' && runStatus !== 'requires_action') {
     console.log('Run failed or timed out');
     const agentReply = "Deme un minuto, voy a consultar.";
     const replyMess = await replyMessage(req.body.From, agentReply).then((resp) => {
@@ -223,9 +246,22 @@ const whatsIncoming = async (req, res) => {
   }
 
   // Step 6: Retrieve messages from the thread
-  let agentReply= "";
+  let agentReply = "";
+  let functionCall = null;
+
   await retrieveMessages(thread.threadId).then((resp) => {
-    agentReply = resp.data.find(msg => msg.role === 'assistant')?.content[0].text.value;
+    const assistantMsg = resp.data.find(msg => msg.role === 'assistant');
+    if (assistantMsg) {
+      if (assistantMsg.function_call) {
+        // Assistant wants to call a function!
+        functionCall = functionMap[assistantMsg.function_call]();
+        
+        agentReply = assistantMsg.function_call.name;
+      } else if (assistantMsg.content) {
+        // Assistant gave a normal text response
+        agentReply = assistantMsg.content[0].text.value;
+      }
+    }
   });
 
   // Step 7: Send the reply back to the user
@@ -348,6 +384,7 @@ const retrieveStatus = async (run_id, thread_id) => {
   });
 
   const data = await response.json();
+  console.log({data});
   return data.status;
 }
 

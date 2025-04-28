@@ -11,10 +11,6 @@ const skuSchema = mongoose.Schema(
       type: String,
       required: true,
     },
-    name: {
-      type: String,
-      required: true,
-    },
     description: {
       type: String,
       required: true,
@@ -29,7 +25,6 @@ const skuSchema = mongoose.Schema(
     },
     length: {
       type: Number,
-      integer: true,
     },
     width: {
       type: String,
@@ -39,7 +34,6 @@ const skuSchema = mongoose.Schema(
     },
     weight: {
       type: Number,
-      integer: true,
     },
     material: {
       type: String,
@@ -49,11 +43,9 @@ const skuSchema = mongoose.Schema(
     },
     price: {
       type: Number,
-      integer: true,
     },
     brand: {
       type: String,
-      integer: true,
     },
     madeOn: {
       type: Date,
