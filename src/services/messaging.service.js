@@ -230,7 +230,7 @@ const whatsIncoming = async (req, res) => {
   } while (runStatus !== 'completed' && runStatus !== 'requires_action' && delayTime < maxDuration);
   
   await thread.updateOne({ runStatus: runStatus, requestDelay: delayTime, runId: assistantRun, status: 'active' });
-  
+  console.log({runStatus});
   // Check if the run was successful
   if (runStatus !== 'completed' && runStatus !== 'requires_action') {
     console.log('Run failed or timed out');
@@ -463,6 +463,8 @@ const runPendingThread = async (thread, runId, threadId) => {
   let agentReply= "";
   await retrieveMessages(thread.threadId).then((resp) => {
     agentReply = resp.data.find(msg => msg.role === 'assistant')?.content[0].text.value;
+    const simpleReply = resp.data.find(msg => msg.role === 'assistant');
+    console.log({simpleReply});
   });
 
   // Step 7: Send the reply back to the user

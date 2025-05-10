@@ -80,6 +80,7 @@ const userSchema = mongoose.Schema(
         },
         name: {
           type: String,
+          enum: ['USER', 'ADMIN', 'CARRIER', 'SALES', 'QA', 'MAINTENANCE'],
         },
       },
       default: {

@@ -84,24 +84,43 @@ const qualityCheck = async (qualityCheckObj, body) => {
  */
 const getGarantiaById = async (garantiaId, userId) => {
   const garantia = await Garantia.getGarantiaById(garantiaId);
-  const user = garantia.userId ? garantia.userId.toString() : false;
-
-  // return garantia if it received userId and is the same as the garantia.userId or if it doesn't have a userId.
-  if ((userId && user === userId) || (userId && !user) || (!userId && !user)) {
-    if (garantia.sku) {
-      const sku = await Sku.findOne({ skuId: garantia.sku });
-      if (sku) {
-        garantia.brand = sku.brand;
-        garantia.description = sku.description;
-      }
+  const user = userId ? await User.findOne({ _id: userId }) : false;
+  // console.log(88, { garantia, userId, user });
+  if (garantia.sku && garantia.description !== null) {
+    const sku = await Sku.findOne({ skuId: garantia.sku });
+    if (sku) {
+      garantia.brand = sku.brand;
+      garantia.description = sku.description;
+      garantia.save(); // save the garantia with the brand and description if it doesn't have them
     }
+  }
+
+  if (
+    user &&
+    ((garantia.status !== 'registered' && user._id === userId) ||
+      (userId && user.role.name === 'ADMIN') ||
+      (userId && user.role.name === 'SALES') ||
+      (userId && user.role.name === 'QA') ||
+      (userId && user.role.name === 'CARRIER'))
+  ) {
     return garantia;
   }
-  // return unauthorized if the garantia has a userId and it's different from the userId received.
-  if ((userId && user !== userId) || (!userId && user)) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+  throw new ApiError(httpStatus.UNAUTHORIZED, 'Unauthorized');
+};
+
+/**
+ * Query for garantiaInfo
+ * @param {Object} filter - Mongo filter
+ * @returns {Promise<QueryResult>}
+ */
+const getGarantiaInfo = async (garantiaId) => {
+  const garantia = await Garantia.getGarantiaById(garantiaId);
+
+  if (!garantia) {
+    return false;
   }
-  return false;
+
+  return { garantiaId: garantia.garantiaId, status: garantia.status };
 };
 
 /**
@@ -259,6 +278,7 @@ module.exports = {
   assign,
   qualityCheck,
   getGarantiaById,
+  getGarantiaInfo,
   queryGarantias,
   updateGarantiaById,
   patchGarantiaById,

@@ -91,6 +91,15 @@ const getGarantia = catchAsync(async (req, res) => {
   res.send({ garantia });
 });
 
+const getGarantiaInfo = catchAsync(async (req, res) => {
+  const garantia = await garantiaService.getGarantiaInfo(req.params.garantiaId);
+
+  if (!garantia) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
+  }
+  res.send({ garantia });
+});
+
 const assign = catchAsync(async (req, res) => {
   const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, req.body);
   if (!garantia) {
@@ -188,6 +197,7 @@ module.exports = {
   qualityCheck,
   getAvailable,
   getGarantia,
+  getGarantiaInfo,
   getGarantias,
   updateGarantia,
   deleteGarantia,
