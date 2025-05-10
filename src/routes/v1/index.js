@@ -9,6 +9,7 @@ const qrcodeRoute = require('./qrcode.route');
 const skuRoute = require('./sku.route');
 const callRoute = require('./call.route');
 const notaRoute = require('./nota.route');
+const cronRoute = require('./cron.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -50,6 +51,10 @@ const defaultRoutes = [
   {
     path: '/nota',
     route: notaRoute,
+  },
+  {
+    path: '/cron',
+    route: cronRoute,
   },
 ];
 
