@@ -120,14 +120,15 @@ const assign = catchAsync(async (req, res) => {
   ) {
     throw new ApiError(httpStatus.LOCKED, 'Garantia already assigned');
   }
-  console.log({garantia});
+  // console.log({garantia});
   const assignAction = await garantiaService.assign(garantia, req.body);
   // console.log({ assign: assignAction });
   res.status(httpStatus.OK).send(assignAction);
 });
 
 const qualityCheck = catchAsync(async (req, res) => {
-  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, req.body);
+  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
+  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, getVerifiedToken.user);
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   } else if (
