@@ -85,7 +85,7 @@ const getGarantias = catchAsync(async (req, res) => {
 const getGarantia = catchAsync(async (req, res) => {
   const userId = typeof req.params.userId !== 'undefined' ? req.params.userId : false;
   if (req.headers.authorization && userId) {
-    const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
+    // const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
     // console.log({ getVerifiedToken });
   }
   const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, userId);
