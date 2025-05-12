@@ -45,7 +45,7 @@ const assignGarantia = {
   body: Joi.object()
     .keys({
       brand: Joi.string().required(),
-      builtOn: Joi.string().required(),
+      builtOn: Joi.string(),
       description: Joi.string().required(),
       sku: Joi.string().required(),
     })

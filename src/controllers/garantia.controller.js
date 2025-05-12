@@ -8,6 +8,7 @@ const CodeGenerator = require('../utils/generator');
 const { qrcodeService } = require('../services');
 const { filesService } = require('../services');
 const { printService } = require('../services');
+const { tokenService } = require('../services');
 
 const create = catchAsync(async (req, res) => {
   const aGarantias = new CodeGenerator(req.body.length, req.body.type, req.body.prefix);
@@ -83,6 +84,10 @@ const getGarantias = catchAsync(async (req, res) => {
 
 const getGarantia = catchAsync(async (req, res) => {
   const userId = typeof req.params.userId !== 'undefined' ? req.params.userId : false;
+  if (req.headers.authorization && userId) {
+    const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
+    // console.log({ getVerifiedToken });
+  }
   const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, userId);
 
   if (!garantia) {
@@ -101,7 +106,9 @@ const getGarantiaInfo = catchAsync(async (req, res) => {
 });
 
 const assign = catchAsync(async (req, res) => {
-  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, req.body);
+  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
+  const garantia = await garantiaService.getGarantiaById(req.params.garantiaId, getVerifiedToken.user);
+
   if (!garantia) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Garantia not found');
   } else if (
@@ -113,6 +120,7 @@ const assign = catchAsync(async (req, res) => {
   ) {
     throw new ApiError(httpStatus.LOCKED, 'Garantia already assigned');
   }
+  console.log({garantia});
   const assignAction = await garantiaService.assign(garantia, req.body);
   // console.log({ assign: assignAction });
   res.status(httpStatus.OK).send(assignAction);
