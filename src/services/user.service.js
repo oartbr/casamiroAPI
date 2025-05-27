@@ -1,5 +1,6 @@
 const httpStatus = require('http-status');
-const { User } = require('../models');
+const mongoose = require('mongoose');
+const { User, Group, Membership } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -14,7 +15,49 @@ const createUser = async (userBody) => {
   if (await User.isPhoneNumberTaken(userBody.phoneNumber)) {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Phone number is already taken');
   }
-  return User.create(userBody);
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Create the user
+    const user = await User.create([userBody], { session });
+
+    // Create a default group
+    const defaultGroupName = `${user[0].firstName} [Personal]`;
+    const group = await Group.create(
+      [
+        {
+          name: defaultGroupName,
+        },
+      ],
+      { session }
+    );
+
+    // Create a membership linking the user to the group
+    await Membership.create(
+      [
+        {
+          user_id: user[0]._id,
+          group_id: group[0]._id,
+          invited_by: user[0]._id, // User is their own inviter for default group
+          status: 'active',
+          role: 'admin', // Default to admin for their own group
+          accepted_at: new Date(),
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return { user: user[0], group: group[0] };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 };
 
 /**
