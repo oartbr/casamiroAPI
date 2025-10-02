@@ -25,6 +25,7 @@ const checkNota = async (notaBody) => {
   const newNota = await Nota.create({
     url: notaBody.notaUrl,
     user: user._id,
+    groupId: user.activeGroupId, // Include the user's active group ID
     status: 'pending',
     registeredAt: new Date(),
     code: new CodeGenerator(9, 'string', 'm').code,
@@ -48,6 +49,12 @@ const queryNotas = async (filter, options) => {
 
   const parsedFilter = filter.filters ? JSON.parse(filter.filters) : { status: [] };
   const parsedSort = 'sort' in options ? JSON.parse(options.sort) : '[{"orderBy": "updatedAt", "order": "desc"}]';
+  
+  // Add group filtering if groupId is provided
+  if (parsedFilter.groupId) {
+    parsedFilter.groupId = parsedFilter.groupId;
+  }
+  
   const adjustedOptions = {
     limit: parseInt(options.limit, 10),
     offset: (parseInt(options.page, 10) - 1) * parseInt(options.limit, 10),

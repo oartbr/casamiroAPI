@@ -10,6 +10,8 @@ const skuRoute = require('./sku.route');
 const callRoute = require('./call.route');
 const notaRoute = require('./nota.route');
 const cronRoute = require('./cron.route');
+const membershipRoute = require('./membership.route');
+const groupRoute = require('./group.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -55,6 +57,14 @@ const defaultRoutes = [
   {
     path: '/cron',
     route: cronRoute,
+  },
+  {
+    path: '/memberships',
+    route: membershipRoute,
+  },
+  {
+    path: '/groups',
+    route: groupRoute,
   },
 ];
 

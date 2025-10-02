@@ -49,7 +49,9 @@ const confirmWhatsCodeLogin = async (code, phoneNumber) => {
   } else {
     await CheckPhoneNumber.findOneAndUpdate({ code, phoneNumber }, { $set: { confirmed: true } }, { upsert: true });
   }
-  const user = await User.findOne({ phoneNumber });
+  // Convert phoneNumber to number for proper matching since User model stores it as Number
+  const phoneNumberAsNumber = parseInt(phoneNumber, 10);
+  const user = await User.findOne({ phoneNumber: phoneNumberAsNumber });
 
   return { user, phoneNumber, confirmed: true };
 };

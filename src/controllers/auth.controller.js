@@ -48,18 +48,15 @@ const verifyEmail = catchAsync(async (req, res) => {
 });
 
 const getMe = catchAsync(async (req, res) => {
-  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
+  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'access');
   const user = await userService.getUserById(getVerifiedToken.user);
   res.status(httpStatus.OK).send(user);
 });
 
 const patchMe = catchAsync(async (req, res) => {
-  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'refresh');
-  const user = await userService.getUserById(getVerifiedToken.user);
-  if (user) {
-    await userService.updateUserById(user._id, req.body);
-  }
-  res.status(httpStatus.OK).send(user);
+  const getVerifiedToken = await tokenService.verifyToken(req.headers.authorization, 'access');
+  const updatedUser = await userService.updateUserById(getVerifiedToken.user, req.body);
+  res.status(httpStatus.OK).send(updatedUser);
 });
 
 module.exports = {

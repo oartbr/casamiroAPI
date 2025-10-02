@@ -10,3 +10,5 @@ module.exports.qrcodeService = require('./qrcode.service');
 module.exports.skuService = require('./sku.service');
 module.exports.callService = require('./call.service');
 module.exports.notaService = require('./nota.service');
+module.exports.membershipService = require('./membership.service');
+module.exports.groupService = require('./group.service');

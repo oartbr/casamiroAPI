@@ -65,10 +65,39 @@ const deleteUser = {
   }),
 };
 
+const getUserMemberships = {
+  params: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+  }),
+  query: Joi.object().keys({
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    status: Joi.string().valid('pending', 'active', 'declined', 'removed'),
+  }),
+};
+
+const getUserGroups = {
+  params: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+  }),
+};
+
+const setActiveGroup = {
+  params: Joi.object().keys({
+    userId: Joi.string().required().custom(objectId),
+  }),
+  body: Joi.object().keys({
+    groupId: Joi.string().required().custom(objectId),
+  }),
+};
+
 module.exports = {
   createUser,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  getUserMemberships,
+  getUserGroups,
+  setActiveGroup,
 };
