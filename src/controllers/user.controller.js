@@ -21,11 +21,8 @@ const getUsers = catchAsync(async (req, res) => {
 });
 
 const getUser = catchAsync(async (req, res) => {
-  const user = await userService.getUserById(req.params.userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-  res.send(user);
+  const result = await userService.getUserById(req.params.userId);
+  res.send(result);
 });
 
 const updateUser = catchAsync(async (req, res) => {
@@ -38,10 +35,36 @@ const deleteUser = catchAsync(async (req, res) => {
   res.status(httpStatus.NO_CONTENT).send();
 });
 
+const getUserMemberships = catchAsync(async (req, res) => {
+  const { page, limit, status } = req.query;
+  const options = {
+    page: parseInt(page, 10) || 1,
+    limit: parseInt(limit, 10) || 10,
+    status,
+  };
+  
+  const result = await userService.getUserMemberships(req.params.userId, options);
+  res.send(result);
+});
+
+const getUserGroups = catchAsync(async (req, res) => {
+  const result = await userService.getUserGroups(req.params.userId);
+  res.send(result);
+});
+
+const setActiveGroup = catchAsync(async (req, res) => {
+  const { groupId } = req.body;
+  const user = await userService.setActiveGroup(req.params.userId, groupId);
+  res.send(user);
+});
+
 module.exports = {
   createUser,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  getUserMemberships,
+  getUserGroups,
+  setActiveGroup,
 };

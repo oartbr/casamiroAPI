@@ -13,18 +13,17 @@ const membershipSchema = mongoose.Schema(
       ref: 'Group', // Reference to the Groups collection
       required: [true, 'Group ID is required'],
     },
-    invitee_email: {
+    invitee_phone: {
       type: String,
       trim: true,
-      lowercase: true,
       validate: {
         validator(value) {
           // Required only if user_id is null (pending invitation)
           if (!this.user_id && !value) return false;
-          // Optional validation for email format
-          return !value || /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
+          // Optional validation for phone format (basic check for length)
+          return !value || (value.length >= 10 && value.length <= 15);
         },
-        message: 'Valid email is required for pending invitations',
+        message: 'Valid phone number is required for pending invitations',
       },
     },
     invited_by: {
@@ -40,8 +39,8 @@ const membershipSchema = mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'editor', 'viewer'],
-      default: 'editor', // Default role for flexibility
+      enum: ['admin', 'editor', 'contributor'],
+      default: 'contributor', // Default role for new invitations
     },
     token: {
       type: String,
@@ -73,7 +72,7 @@ const membershipSchema = mongoose.Schema(
 // Indexes for performance
 membershipSchema.index({ group_id: 1, status: 1 }); // For querying members/invitations by group
 membershipSchema.index({ user_id: 1 }); // For querying memberships by user
-membershipSchema.index({ invitee_email: 1 }, { sparse: true }); // For pending invitations
+membershipSchema.index({ invitee_phone: 1 }, { sparse: true }); // For pending invitations
 membershipSchema.index({ token: 1 }, { unique: true, sparse: true }); // For invitation token lookups
 membershipSchema.index({ expiration_date: 1 }, { expireAfterSeconds: 0 }); // TTL index for expired invitations
 
@@ -83,9 +82,9 @@ membershipSchema.pre('validate', function (next) {
   if (this.status === 'active' && !this.user_id) {
     next(new Error('User ID is required for active memberships'));
   }
-  // Ensure invitee_email is set for pending invitations
-  if (this.status === 'pending' && !this.invitee_email) {
-    next(new Error('Invitee email is required for pending invitations'));
+  // Ensure invitee_phone is set for pending invitations
+  if (this.status === 'pending' && !this.invitee_phone) {
+    next(new Error('Invitee phone is required for pending invitations'));
   }
   next();
 });

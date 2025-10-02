@@ -52,8 +52,18 @@ const saveToken = async (token, userId, expires, type, blacklisted = false) => {
  * @returns {Promise<Token>}
  */
 const verifyToken = async (token, type) => {
-  const payload = jwt.verify(token, config.jwt.secret);
-  const tokenDoc = await Token.findOne({ token, type, user: payload.sub, blacklisted: false });
+  // Remove "Bearer " prefix if present
+  const cleanToken = token.replace(/^Bearer\s+/i, '');
+  
+  const payload = jwt.verify(cleanToken, config.jwt.secret);
+  
+  // For access tokens, we don't store them in the database, so just verify the JWT
+  if (type === tokenTypes.ACCESS) {
+    return { user: payload.sub };
+  }
+  
+  // For other token types (refresh, reset password, etc.), check the database
+  const tokenDoc = await Token.findOne({ token: cleanToken, type, user: payload.sub, blacklisted: false });
   if (!tokenDoc) {
     throw new Error('Token not found');
   }

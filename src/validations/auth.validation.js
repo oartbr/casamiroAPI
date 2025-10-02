@@ -75,6 +75,9 @@ const patchMe = {
     firstName: Joi.string(),
     lastName: Joi.string(),
     photo: Joi.string(),
+    email: Joi.string().email(),
+    password: Joi.string().custom(password),
+    oldPassword: Joi.string(),
   }),
   headers: Joi.object({
     authorization: Joi.string(),

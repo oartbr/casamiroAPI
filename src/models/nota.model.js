@@ -15,6 +15,11 @@ const notaSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    groupId: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'Group',
+      required: false,
+    },
     purchaseDate: {
       type: Date,
     },

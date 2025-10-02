@@ -11,6 +11,11 @@ router.get('/:userId', validate(userValidation.getUser), userController.getUser)
 router.patch('/:userId', validate(userValidation.updateUser), userController.updateUser);
 router.post('/', validate(userValidation.createUser), userController.createUser);
 router.delete('/:userId', validate(userValidation.deleteUser), userController.deleteUser);
+
+// User membership and group endpoints
+router.get('/:userId/memberships', validate(userValidation.getUserMemberships), userController.getUserMemberships);
+router.get('/:userId/groups', validate(userValidation.getUserGroups), userController.getUserGroups);
+router.patch('/:userId/active-group', validate(userValidation.setActiveGroup), userController.setActiveGroup);
 /*
 router
   .route('/')
@@ -133,7 +138,23 @@ module.exports = router;
  *                 results:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/User'
+ *                     allOf:
+ *                       - $ref: '#/components/schemas/User'
+ *                       - type: object
+ *                         properties:
+ *                           primaryGroup:
+ *                             type: object
+ *                             nullable: true
+ *                             properties:
+ *                               _id:
+ *                                 type: string
+ *                               name:
+ *                                 type: string
+ *                           primaryRole:
+ *                             type: string
+ *                             nullable: true
+ *                           totalGroups:
+ *                             type: integer
  *                 page:
  *                   type: integer
  *                   example: 1
@@ -174,7 +195,29 @@ module.exports = router;
  *         content:
  *           application/json:
  *             schema:
- *                $ref: '#/components/schemas/User'
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                 memberships:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Membership'
+ *                 primaryGroup:
+ *                   type: object
+ *                   nullable: true
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                 primaryRole:
+ *                   type: string
+ *                   nullable: true
+ *                 totalGroups:
+ *                   type: integer
+ *                 pendingInvitations:
+ *                   type: integer
  *       "401":
  *         $ref: '#/components/responses/Unauthorized'
  *       "403":
@@ -255,4 +298,153 @@ module.exports = router;
  *         $ref: '#/components/responses/Forbidden'
  *       "404":
  *         $ref: '#/components/responses/NotFound'
+ *
+ * @swagger
+ * /users/{userId}/memberships:
+ *   get:
+ *     summary: Get user memberships
+ *     description: Get all memberships for a specific user with pagination and filtering
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Number of results per page
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, active, declined, removed]
+ *         description: Filter by membership status
+ *     responses:
+ *       "200":
+ *         description: User memberships retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                 memberships:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Membership'
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *                 totalPages:
+ *                   type: integer
+ *       "404":
+ *         description: User not found
+ *
+ * @swagger
+ * /users/{userId}/groups:
+ *   get:
+ *     summary: Get user groups summary
+ *     description: Get comprehensive summary of user's group memberships and role distribution
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       "200":
+ *         description: User groups summary retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     firstName:
+ *                       type: string
+ *                     lastName:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                 groupsByStatus:
+ *                   type: object
+ *                   properties:
+ *                     active:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Membership'
+ *                     pending:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Membership'
+ *                     declined:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Membership'
+ *                     removed:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Membership'
+ *                 roleDistribution:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: integer
+ *                 totalActiveGroups:
+ *                   type: integer
+ *                 totalPendingInvitations:
+ *                   type: integer
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     totalGroups:
+ *                       type: integer
+ *                     activeGroups:
+ *                       type: integer
+ *                     pendingInvitations:
+ *                       type: integer
+ *                     primaryRole:
+ *                       type: string
+ *                     primaryGroup:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *       "404":
+ *         description: User not found
  */

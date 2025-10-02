@@ -100,9 +100,13 @@ checkPhoneNumberSchema.statics.confirmCode = async function (code, garantiaId) {
  * @returns {Promise<boolean>}
  */
 checkPhoneNumberSchema.statics.confirmCodeLogin = async function (code, phoneNumber) {
-  const check = await this.findOne({ code, phoneNumber });
+  // Convert code to number for proper matching since it's stored as Number in the schema
+  const codeAsNumber = parseInt(code, 10);
+  const phoneNumberAsNumber = parseInt(phoneNumber, 10);
+  
+  const check = await this.findOne({ code: codeAsNumber, phoneNumber: phoneNumberAsNumber });
   if (check === null) {
-    await this.findOne({ phoneNumber }).updateOne({ $inc: { count: 1 } });
+    await this.findOne({ phoneNumber: phoneNumberAsNumber }).updateOne({ $inc: { count: 1 } });
   } else if (check.confirmed === true) {
     return false;
   }
