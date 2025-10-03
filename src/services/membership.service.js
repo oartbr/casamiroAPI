@@ -155,11 +155,9 @@ const getGroupMemberships = async (groupId, options = {}) => {
   const total = await Membership.countDocuments(filter);
 
   return {
-    memberships,
-    total,
-    page: page * 1,
-    limit: limit * 1,
-    totalPages: Math.ceil(total / limit),
+    results: memberships,
+    hasNextPage: page * 1 < Math.ceil(total / limit),
+    totalCount: total,
   };
 };
 
