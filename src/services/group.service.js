@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const httpStatus = require('http-status');
-const { Group, Membership } = require('../models');
+const { Group, Membership, List } = require('../models');
 const ApiError = require('../utils/ApiError');
 
 /**
@@ -29,6 +29,19 @@ const createGroup = async (groupBody) => {
       status: 'active',
       role: 'admin', // Creator is always admin
       accepted_at: new Date(),
+    }], { session });
+
+    // Create a default list for the group
+    await List.create([{
+      name: 'Default List',
+      description: 'Default list for this group',
+      groupId: group[0]._id,
+      isDefault: true,
+      createdBy: groupBody.createdBy,
+      settings: {
+        allowItemDeletion: true,
+        requireApprovalForItems: false,
+      },
     }], { session });
 
     await session.commitTransaction();

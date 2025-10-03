@@ -12,6 +12,7 @@ const notaRoute = require('./nota.route');
 const cronRoute = require('./cron.route');
 const membershipRoute = require('./membership.route');
 const groupRoute = require('./group.route');
+const listRoute = require('./list.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -65,6 +66,10 @@ const defaultRoutes = [
   {
     path: '/groups',
     route: groupRoute,
+  },
+  {
+    path: '/lists',
+    route: listRoute,
   },
 ];
 

@@ -8,3 +8,4 @@ module.exports.Product = require('./product.model');
 module.exports.Vendor = require('./vendor.model');
 module.exports.Group = require('./group.model');
 module.exports.Membership = require('./membership.model');
+module.exports.List = require('./list.model');
