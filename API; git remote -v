@@ -1,0 +1,5 @@
+[33ma190d6e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmamut[m[33m)[m feat: Implement group and membership services with CRUD operations
+[33m0da90a0[m[33m ([m[1;31morigin/mamut[m[33m)[m chore: add group and membership models, enhance user registration to create default group and membership
+[33m1844613[m chore: rename route from '/get/:id' to '/details/:id' for clarity
+[33m81ad63b[m chore: add cron controller, routes, and validation for QR code generation
+[33m26b848b[m chore: add product and vendor models, implement nota loading functionality, and enhance validation
