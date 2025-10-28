@@ -279,9 +279,27 @@ const canViewGroup = () => {
       }
 
       // Check if user has any membership in the group (active, pending, etc.)
+      // First get the user to check their phone number for pending invitations
+      const { User } = require('../models');
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+      }
+
       const membership = await Membership.findOne({
         group_id: groupId,
-        user_id: userId,
+        $or: [
+          { user_id: userId }, // Active memberships
+          { 
+            invitee_phone: user.phoneNumber?.toString(), 
+            status: 'pending' 
+          }, // Pending invitations by phone number (convert to string)
+          { 
+            invitee_phone: user.phoneNumber, 
+            status: 'pending' 
+          } // Pending invitations by phone number (as number)
+        ]
       });
 
       if (!membership) {
