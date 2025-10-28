@@ -264,10 +264,53 @@ const getUserGroups = async (userId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
   
-  // Get all memberships grouped by status
-  const memberships = await Membership.find({ user_id: userId })
+  // Get all memberships for this user (both active memberships and pending invitations)
+  // Active memberships: user_id matches the user
+  // Pending invitations: invitee_phone matches the user's phone number
+  const memberships = await Membership.find({
+    $or: [
+      { user_id: userId }, // Active memberships
+      { 
+        invitee_phone: user.phoneNumber?.toString(), 
+        status: 'pending' 
+      }, // Pending invitations by phone number (convert to string)
+      { 
+        invitee_phone: user.phoneNumber, 
+        status: 'pending' 
+      } // Pending invitations by phone number (as number)
+    ]
+  })
     .populate('group_id', 'name description createdBy isPersonal settings createdAt updatedAt')
     .populate('invited_by', 'firstName lastName email');
+
+  // Debug logging
+  console.log('User groups query debug:', {
+    userId,
+    userPhoneNumber: user.phoneNumber,
+    userPhoneNumberAsString: user.phoneNumber?.toString(),
+    totalMemberships: memberships.length,
+    activeMemberships: memberships.filter(m => m.status === 'active').length,
+    pendingMemberships: memberships.filter(m => m.status === 'pending').length,
+    pendingDetails: memberships.filter(m => m.status === 'pending').map(m => ({
+      id: m._id,
+      invitee_phone: m.invitee_phone,
+      group_id: m.group_id,
+      invited_by: m.invited_by,
+      token: m.token
+    }))
+  });
+
+  // Additional debug: Check all pending memberships in the database
+  const allPendingMemberships = await Membership.find({ status: 'pending' });
+  console.log('All pending memberships in database:', {
+    count: allPendingMemberships.length,
+    details: allPendingMemberships.map(m => ({
+      id: m._id,
+      invitee_phone: m.invitee_phone,
+      group_id: m.group_id,
+      token: m.token
+    }))
+  });
   
   const groupsByStatus = {
     active: memberships.filter(m => m.status === 'active'),
