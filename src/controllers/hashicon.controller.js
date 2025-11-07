@@ -7,14 +7,7 @@ const { generateHashicon } = require('../utils/hashicon');
  * GET /v1/hashicon/test?input=test123&size=200&patternType=0&bgOpacity=0.1&cellBorderRadius=2&cellRotation=45
  */
 const testHashicon = catchAsync(async (req, res) => {
-  const {
-    input = 'test',
-    size = 200,
-    patternType = 0,
-    bgOpacity = 0.1,
-    cellBorderRadius = 2,
-    cellRotation = 0,
-  } = req.query;
+  const { input = 'test', size = 200, patternType = 0, bgOpacity = 0.1, cellBorderRadius = 2, cellRotation = 0 } = req.query;
 
   // Parse numeric parameters
   const parsedSize = parseInt(size, 10) || 200;
@@ -72,46 +65,29 @@ const testHashiconVariations = catchAsync(async (req, res) => {
   // Generate variations
   const variations = [
     {
-      name: 'Symmetric (Default)',
+      name: 'Clean',
       patternType: 0,
       bgOpacity: 0.1,
-      cellBorderRadius: 2,
     },
     {
-      name: 'Symmetric (High Opacity)',
-      patternType: 0,
-      bgOpacity: 0.3,
-      cellBorderRadius: 2,
-    },
-    {
-      name: 'Symmetric (Rounded)',
-      patternType: 0,
-      bgOpacity: 0.1,
-      cellBorderRadius: 8,
-    },
-    {
-      name: 'Asymmetric',
+      name: 'Leaning Tower',
       patternType: 1,
-      bgOpacity: 0.1,
-      cellBorderRadius: 2,
+      bgOpacity: 0.3,
     },
     {
-      name: 'Circular',
+      name: 'Crystal Box',
       patternType: 2,
       bgOpacity: 0.1,
-      cellBorderRadius: 2,
     },
     {
-      name: 'Rotated',
+      name: 'Hashicon Copycat',
       patternType: 3,
       bgOpacity: 0.1,
-      cellBorderRadius: 2,
     },
     {
-      name: 'Triangular',
+      name: 'Acrylic',
       patternType: 4,
       bgOpacity: 0.1,
-      cellBorderRadius: 2,
     },
   ];
 
@@ -145,22 +121,22 @@ const testHashiconVariations = catchAsync(async (req, res) => {
     });
 
     // Extract the inner content (remove outer svg tags)
-    const hashiconContent = hashiconSvg
-      .replace(/<svg[^>]*>/, '')
-      .replace('</svg>', '');
+    const hashiconContent = hashiconSvg.replace(/<svg[^>]*>/, '').replace('</svg>', '');
 
     // Add group for this variation
     svg += `<g transform="translate(${x}, ${y})">`;
-    
+
     // Add label background
     svg += `<rect x="0" y="0" width="${iconSize}" height="${labelHeight}" fill="white" opacity="0.8"/>`;
-    
+
     // Add label text
-    svg += `<text x="${iconSize / 2}" y="${labelHeight / 2 + 4}" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">${variation.name}</text>`;
-    
+    svg += `<text x="${iconSize / 2}" y="${
+      labelHeight / 2 + 4
+    }" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#333">${variation.name}</text>`;
+
     // Add hashicon
     svg += `<g transform="translate(0, ${labelHeight})">${hashiconContent}</g>`;
-    
+
     svg += `</g>`;
   });
 
@@ -175,4 +151,3 @@ module.exports = {
   testHashicon,
   testHashiconVariations,
 };
-

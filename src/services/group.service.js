@@ -7,11 +7,23 @@ const { generateAndUploadHashicon } = require('../utils/hashicon');
 /**
  * Create a group
  * @param {Object} groupBody
+ * @param {Object} options - Optional configuration
+ * @param {mongoose.ClientSession} [options.session] - Optional session for transaction management
+ * @param {boolean} [options.skipMembership] - Skip creating membership for creator (default: false)
+ * @param {boolean} [options.skipList] - Skip creating default list (default: false)
+ * @param {boolean} [options.skipHashicon] - Skip generating hashicon (default: false)
  * @returns {Promise<Group>}
  */
-const createGroup = async (groupBody) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+const createGroup = async (groupBody, options = {}) => {
+  const { session: providedSession, skipMembership = false, skipList = false, skipHashicon = false } = options;
+
+  // Use provided session or create a new one
+  const session = providedSession || (await mongoose.startSession());
+  const shouldManageTransaction = !providedSession;
+
+  if (shouldManageTransaction) {
+    session.startTransaction();
+  }
 
   try {
     // Ensure ownerId is set to the same as createdBy
@@ -22,46 +34,71 @@ const createGroup = async (groupBody) => {
     // Create the group
     const group = await Group.create([groupBody], { session });
 
-    // Create a membership for the creator
-    await Membership.create([{
-      user_id: groupBody.createdBy,
-      group_id: group[0]._id,
-      invited_by: groupBody.createdBy, // Creator invites themselves
-      status: 'active',
-      role: 'admin', // Creator is always admin
-      accepted_at: new Date(),
-    }], { session });
-
-    // Create a default list for the group
-    await List.create([{
-      name: 'Default List',
-      description: 'Default list for this group',
-      groupId: group[0]._id,
-      isDefault: true,
-      createdBy: groupBody.createdBy,
-      settings: {
-        allowItemDeletion: true,
-        requireApprovalForItems: false,
-      },
-    }], { session });
-
-    await session.commitTransaction();
-    session.endSession();
-
-    // Generate and upload hashicon after transaction commits
-    try {
-      const iconUrl = await generateAndUploadHashicon(group[0]._id.toString());
-      group[0].iconUrl = iconUrl;
-      await group[0].save();
-    } catch (hashiconError) {
-      // Log error but don't fail group creation if hashicon generation fails
-      console.error('Error generating hashicon for group:', group[0]._id, hashiconError);
+    // Create a membership for the creator (unless skipped)
+    if (!skipMembership && groupBody.createdBy) {
+      await Membership.create(
+        [
+          {
+            user_id: groupBody.createdBy,
+            group_id: group[0]._id,
+            invited_by: groupBody.createdBy, // Creator invites themselves
+            status: 'active',
+            role: 'admin', // Creator is always admin
+            accepted_at: new Date(),
+          },
+        ],
+        { session }
+      );
     }
+
+    // Create a default list for the group (unless skipped)
+    if (!skipList && groupBody.createdBy) {
+      await List.create(
+        [
+          {
+            name: 'Default List',
+            description: 'Default list for this group',
+            groupId: group[0]._id,
+            isDefault: true,
+            createdBy: groupBody.createdBy,
+            settings: {
+              allowItemDeletion: true,
+              requireApprovalForItems: false,
+            },
+          },
+        ],
+        { session }
+      );
+    }
+
+    // Only commit/end session if we created it
+    if (shouldManageTransaction) {
+      await session.commitTransaction();
+      session.endSession();
+
+      // Generate and upload hashicon after transaction commits (unless skipped)
+      // Only generate hashicon if we're managing the transaction (to ensure it happens after commit)
+      if (!skipHashicon) {
+        try {
+          const iconUrl = await generateAndUploadHashicon(group[0]._id.toString());
+          group[0].iconUrl = iconUrl;
+          await group[0].save();
+        } catch (hashiconError) {
+          // Log error but don't fail group creation if hashicon generation fails
+          console.error('Error generating hashicon for group:', group[0]._id, hashiconError);
+        }
+      }
+    }
+    // If session is provided by caller, don't generate hashicon here
+    // Caller should handle hashicon generation after their transaction commits
 
     return group[0];
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
+    // Only abort/end session if we created it
+    if (shouldManageTransaction) {
+      await session.abortTransaction();
+      session.endSession();
+    }
     throw error;
   }
 };
@@ -73,13 +110,13 @@ const createGroup = async (groupBody) => {
  */
 const getGroupById = async (id) => {
   const group = await Group.findById(id);
-  
+
   // Ensure ownerId is set (for backward compatibility with existing groups)
   if (group && !group.ownerId && group.createdBy) {
     group.ownerId = group.createdBy;
     await group.save();
   }
-  
+
   return group;
 };
 
@@ -90,7 +127,7 @@ const getGroupById = async (id) => {
  */
 const getGroupByIdWithMemberships = async (id) => {
   const group = await Group.findById(id).populate('createdBy', 'firstName lastName email');
-  
+
   if (!group) {
     return null;
   }
@@ -123,13 +160,13 @@ const getGroupByIdPopulated = async (id) => {
   const group = await Group.findById(id)
     .populate('createdBy', 'firstName lastName email')
     .populate('members', 'firstName lastName email');
-  
+
   // Ensure ownerId is set (for backward compatibility with existing groups)
   if (group && !group.ownerId && group.createdBy) {
     group.ownerId = group.createdBy;
     await group.save();
   }
-  
+
   return group;
 };
 
@@ -174,11 +211,11 @@ const updateGroupSettings = async (groupId, settingsBody) => {
   if (!group) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Group not found');
   }
-  
+
   if (!group.settings) {
     group.settings = {};
   }
-  
+
   Object.assign(group.settings, settingsBody);
   await group.save();
   return group;

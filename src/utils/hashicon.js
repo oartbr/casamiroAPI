@@ -99,6 +99,11 @@ const generateHashicon = (input, size = 100, options = {}) => {
   const lighterRgb = hslToRgb(baseHue, baseSaturation * 0.7, lighterLightness);
   const lighterColor = rgbToHex(lighterRgb.r, lighterRgb.g, lighterRgb.b);
 
+  // Create a darker version for gradient start
+  const darkerLightness = Math.min(50, baseLightness);
+  const darkerRgb = hslToRgb(baseHue, baseSaturation, darkerLightness);
+  const darkerColor = rgbToHex(darkerRgb.g, darkerRgb.r, darkerRgb.b);
+
   // Generate SVG
   const cellSize = size / 5;
   // Create unique but deterministic gradient ID
@@ -107,34 +112,25 @@ const generateHashicon = (input, size = 100, options = {}) => {
 
   // Background with gradient - using different colors for actual gradient effect
   const bgOpacityStart = 1;
-  const bgOpacityEnd = 0.1;
+  const bgOpacityEnd = 0.4;
   svg += `<defs><linearGradient id="${gradientId}" x1="0%" y1="0%" x2="100%" y2="100%">`;
-  svg += `<stop offset="0%" stop-color="${baseColor}" stop-opacity="${bgOpacityStart}" />`;
-  svg += `<stop offset="100%" stop-color="${lighterColor}" stop-opacity="${bgOpacityEnd}" />`;
+  svg += `<stop offset="0%" stop-color="${lighterColor}" stop-opacity="${bgOpacityStart}" />`;
+  svg += `<stop offset="100%" stop-color="${baseColor}" stop-opacity="${bgOpacityEnd}" />`;
+  svg += `</linearGradient>`;
+  svg += `<linearGradient id="${gradientId}b" x1="0%" y1="0%" x2="100%" y2="100%">`;
+  svg += `<stop offset="0%" stop-color="${darkerColor}" stop-opacity="${bgOpacityStart / 2}" />`;
+  svg += `<stop offset="100%" stop-color="${baseColor}" stop-opacity="${bgOpacityEnd / 2}" />`;
   svg += `</linearGradient></defs>`;
-  svg += `<rect width="${size}" height="${size}" fill="url(#${gradientId})"/>`;
-
-  // Helper function to render a cell with optional rotation
-  const renderCell = (x, y, color, rotation = 0) => {
-    if (rotation !== 0 && rotation % 360 !== 0) {
-      const centerX = x + cellSize / 2;
-      const centerY = y + cellSize / 2;
-      return `<g transform="translate(${centerX}, ${centerY}) rotate(${rotation}) translate(${-cellSize / 2}, ${
-        -cellSize / 2
-      })"><rect x="0" y="0" width="${cellSize}" height="${cellSize}" fill="${color}" rx="${cellBorderRadius}"/></g>`;
-    }
-    return `<rect x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${color}" rx="${cellBorderRadius}"/>`;
-  };
 
   // Helper function to render a triangle with optional rotation
   // direction: 0=up, 1=down, 2=left, 3=right
-  const renderTriangle = (x, y, color, direction = 0, rotation = 0) => {
+  const renderTriangle = (x, y, color, direction = 0, rotation = 0, tSize = 0, colorB) => {
     const centerX = x + cellSize / 2;
     const centerY = y + cellSize / 2;
 
     // Define triangle points based on direction (relative to center)
     let points;
-    const halfSize = cellSize / 2;
+    const halfSize = tSize ? tSize : cellSize / 2;
     switch (direction % 4) {
       case 0: // Up
         points = `0,-${halfSize} -${halfSize},${halfSize} ${halfSize},${halfSize}`;
@@ -150,41 +146,20 @@ const generateHashicon = (input, size = 100, options = {}) => {
         break;
     }
 
+    const fill = `url(#${gradientId})`;
     // Apply rotation if specified
     if (rotation !== 0 && rotation % 360 !== 0) {
-      return `<g transform="translate(${centerX}, ${centerY}) rotate(${rotation})"><polygon points="${points}" fill="${color}"/></g>`;
+      return `<g transform="translate(${centerX}, ${centerY}) rotate(${rotation})"><polygon points="${points}" fill="${
+        colorB ? colorB : color
+      }"/></g>`;
     }
-    return `<g transform="translate(${centerX}, ${centerY})"><polygon points="${points}" fill="${color}"/></g>`;
+    return `<g transform="translate(${centerX}, ${centerY})"><polygon points="${points}" fill="${fill}"/></g>`;
   };
-
-  function renderDiamond(index, lat, lon, angle) {
-    let svg = '';
-    for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 4; col += 1) {
-        const hashIndex = (row * 5 + col) * index;
-        const byte = parseInt(hash.substring(hashIndex, hashIndex + 2), 16);
-        const shouldFill = 1;
-        const offsetBorder = col % 2 == 0 && row % 2 == 0 && col < 2 ? cellSize : 0;
-        const limit = col < 2 ? 1 : 0;
-        const offsetMiddle = row == 1 && col > 0 ? cellSize : 0;
-        if (!offsetBorder && limit) {
-          const x = col * cellSize;
-          const y = row * (cellSize / 2);
-          const cellColor = getCellColor(row * index, col * index);
-          // Pattern type 3 uses 45 degrees by default, but can be overridden by cellRotation
-          const rotation = cellRotation !== 0 ? cellRotation : 45;
-          svg += renderTriangle(x + offsetBorder + offsetMiddle, y, cellColor, 0, 270);
-          svg += renderTriangle(x + cellSize + offsetBorder + offsetMiddle, y, cellColor, 0, 90);
-        }
-      }
-    }
-    return `<g transform="rotate(${angle}) translate(${lat}, ${lon})">${svg}</g>`;
-  }
 
   function renderHasher(index, lat, lon, angle) {
     let svg = '';
     for (let row = 0; row < 3; row += 1) {
-      for (let col = 0; col < 4; col += 1) {
+      for (let col = 0; col < 3; col += 1) {
         const hashIndex = (row * 5 + col) * index;
         const byte = parseInt(hash.substring(hashIndex, hashIndex + 2), 16);
         const shouldFill = 1;
@@ -207,127 +182,42 @@ const generateHashicon = (input, size = 100, options = {}) => {
 
   // Generate pattern based on patternType
   if (patternType === 0) {
-    // Symmetric pattern (5x5 grid, mirrored horizontally)
-    for (let row = 0; row < 5; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        const hashIndex = (row * 3 + col) * 2;
-        const byte1 = parseInt(hash.substring(hashIndex, hashIndex + 2), 16);
-        const byte2 = parseInt(hash.substring(hashIndex + 2, hashIndex + 4), 16);
-        const shouldFill = (byte1 + byte2) % 3 !== 0;
-
-        if (shouldFill) {
-          const x = col * cellSize;
-          const y = row * cellSize;
-          const mirrorX = (4 - col) * cellSize;
-
-          // Get unique colors for left and right cells
-          const leftColor = getCellColor(row, col);
-          const rightColor = getCellColor(row, 4 - col);
-
-          svg += renderCell(x, y, leftColor, cellRotation);
-          svg += renderCell(mirrorX, y, rightColor, cellRotation);
-        }
-      }
-      const centerHashIndex = (row * 3 + 2) * 2;
-      const centerByte = parseInt(hash.substring(centerHashIndex, centerHashIndex + 2), 16);
-      if (centerByte % 2 === 0) {
-        const x = 2 * cellSize;
-        const y = row * cellSize;
-        const centerColor = getCellColor(row, 2);
-        svg += renderCell(x, y, centerColor, cellRotation);
-      }
-    }
+    // Clean
+    svg += renderHasher(3, 0, 40, 0);
+    svg += renderHasher(2, 0, 20, 0);
+    svg += renderHasher(1, 0, 0, 0);
   } else if (patternType === 1) {
-    // Asymmetric pattern (full 5x5 grid)
-    for (let row = 0; row < 5; row += 1) {
-      for (let col = 0; col < 5; col += 1) {
-        const hashIndex = (row * 5 + col) * 2;
-        const byte = parseInt(hash.substring(hashIndex, hashIndex + 2), 16);
-        const shouldFill = byte % 2 === 0;
-
-        if (shouldFill) {
-          const x = col * cellSize;
-          const y = row * cellSize;
-          const cellColor = getCellColor(row, col);
-          svg += renderCell(x, y, cellColor, cellRotation);
-        }
-      }
-    }
+    // Leaning Tower
+    svg += renderHasher(3, 5, 40, 5);
+    svg += renderHasher(2, 5, 20, 10);
+    svg += renderHasher(1, 5, 0, 15);
   } else if (patternType === 2) {
-    // Circular pattern
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const maxRadius = size / 2 - cellSize;
-
-    for (let i = 0; i < 8; i += 1) {
-      const hashIndex = i * 4;
-      const byte1 = parseInt(hash.substring(hashIndex, hashIndex + 2), 16);
-      const byte2 = parseInt(hash.substring(hashIndex + 2, hashIndex + 4), 16);
-      const angle = (i / 8) * Math.PI * 2;
-      const radius = (byte1 / 255) * maxRadius;
-
-      if (byte2 % 2 === 0) {
-        const circleColor = getCellColor(0, 0, i);
-        const circleX = centerX + Math.cos(angle) * radius;
-        const circleY = centerY + Math.sin(angle) * radius;
-        if (cellRotation !== 0 && cellRotation % 360 !== 0) {
-          // For circles, apply rotation by converting to square and rotating
-          svg += `<g transform="translate(${circleX}, ${circleY}) rotate(${cellRotation}) translate(${-cellSize / 2}, ${
-            -cellSize / 2
-          })"><rect x="0" y="0" width="${cellSize}" height="${cellSize}" fill="${circleColor}" rx="${cellBorderRadius}"/></g>`;
-        } else {
-          svg += `<circle cx="${circleX}" cy="${circleY}" r="${cellSize / 2}" fill="${circleColor}"/>`;
-        }
-      }
-    }
-    // Center circle
-    const centerByte = parseInt(hash.substring(0, 2), 16);
-    if (centerByte % 2 === 0) {
-      const centerColor = getCellColor(0, 0, 8);
-      if (cellRotation !== 0 && cellRotation % 360 !== 0) {
-        svg += `<g transform="translate(${centerX}, ${centerY}) rotate(${cellRotation}) translate(${-cellSize / 2}, ${
-          -cellSize / 2
-        })"><rect x="0" y="0" width="${cellSize}" height="${cellSize}" fill="${centerColor}" rx="${cellBorderRadius}"/></g>`;
-      } else {
-        svg += `<circle cx="${centerX}" cy="${centerY}" r="${cellSize / 2}" fill="${centerColor}"/>`;
-      }
-    }
+    // Crystal box
+    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20);
+    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20);
+    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20);
+    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20);
+    svg += renderHasher(1, 0, 0, 0);
   } else if (patternType === 3) {
-    svg += renderHasher(1, 0, -40, 90);
-    svg += renderHasher(2, 0, -50, 90);
-    svg += renderHasher(3, 0, -60, 90);
+    // Hashicon copycat
+    svg += renderTriangle(50, 30, darkerColor, 0, 270, 20);
+    svg += renderTriangle(10, 30, lighterColor, 0, 90, 20);
+    svg += renderHasher(3, 0, 40, 0);
+    svg += renderHasher(2, 0, 20, 0);
+    svg += renderHasher(1, 0, 0, 0);
+    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20);
+    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20);
+    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20);
+    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20);
   } else if (patternType === 4) {
-    // Symmetric pattern (5x5 grid, mirrored horizontally)
-    for (let row = 0; row < 5; row += 1) {
-      for (let col = 0; col < 3; col += 1) {
-        const hashIndex = (row * 3 + col) * 2;
-        const byte1 = parseInt(hash.substring(hashIndex, hashIndex + 2), 16);
-        const byte2 = parseInt(hash.substring(hashIndex + 2, hashIndex + 4), 16);
-        const shouldFill = (byte1 + byte2) % 3 !== 0;
-
-        if (shouldFill) {
-          const x = col * cellSize;
-          const y = row * cellSize;
-          const mirrorX = (4 - col) * cellSize;
-
-          // Get unique colors for left and right cells
-          const leftColor = getCellColor(row, col);
-          const rightColor = getCellColor(row, 4 - col);
-
-          svg += renderTriangle(x, y, leftColor, 0, 270);
-          svg += renderTriangle(x + cellSize, y, leftColor, 0, 90);
-          svg += renderTriangle(mirrorX, y, rightColor, 0, cellRotation);
-        }
-      }
-      const centerHashIndex = (row * 3 + 2) * 2;
-      const centerByte = parseInt(hash.substring(centerHashIndex, centerHashIndex + 2), 16);
-      if (centerByte % 2 === 0) {
-        const x = 2 * cellSize;
-        const y = row * cellSize;
-        const centerColor = getCellColor(row, 2);
-        svg += renderTriangle(x, y, centerColor, 90, cellRotation);
-      }
-    }
+    // Acrylic
+    svg += renderHasher(2, 0, 20, 0);
+    svg += renderTriangle(10, 10, `url(#${gradientId}b)`, 0, 270, 20);
+    svg += renderTriangle(50, 10, `url(#${gradientId}b)`, 0, 90, 20);
+    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20);
+    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20);
+    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20);
+    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20);
   }
 
   svg += '</svg>';
