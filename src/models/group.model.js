@@ -41,6 +41,10 @@ const groupSchema = mongoose.Schema(
         default: false,
       },
     },
+    iconUrl: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,

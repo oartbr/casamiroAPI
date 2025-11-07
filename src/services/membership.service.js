@@ -121,7 +121,7 @@ const declineMembershipInvitation = async (token) => {
 const getMembershipById = async (id) => {
   const membership = await Membership.findById(id)
     .populate('user_id', 'firstName lastName email')
-    .populate('group_id', 'name')
+    .populate('group_id', 'name iconUrl')
     .populate('invited_by', 'firstName lastName email');
   
   if (!membership) {
@@ -148,6 +148,7 @@ const getGroupMemberships = async (groupId, options = {}) => {
   const memberships = await Membership.find(filter)
     .populate('user_id', 'firstName lastName email')
     .populate('invited_by', 'firstName lastName email')
+    .populate('group_id', 'name iconUrl')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
     .skip((page - 1) * limit);
@@ -176,7 +177,7 @@ const getUserMemberships = async (userId, options = {}) => {
   }
 
   const memberships = await Membership.find(filter)
-    .populate('group_id', 'name')
+    .populate('group_id', 'name iconUrl')
     .populate('invited_by', 'firstName lastName email')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
