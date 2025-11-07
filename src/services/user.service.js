@@ -102,7 +102,7 @@ const queryUsers = async (filter, options) => {
       const primaryMembership = await Membership.findOne({
         user_id: user._id,
         status: 'active'
-      }).populate('group_id', 'name');
+      }).populate('group_id', 'name iconUrl');
       
       // Get total groups count
       const totalGroups = await Membership.countDocuments({
@@ -137,7 +137,7 @@ const getUserById = async (id) => {
   
   // Get user's memberships with group details
   const memberships = await Membership.find({ user_id: id })
-    .populate('group_id', 'name')
+    .populate('group_id', 'name iconUrl')
     .populate('invited_by', 'firstName lastName email')
     .sort({ createdAt: -1 });
   
@@ -229,7 +229,7 @@ const getUserMemberships = async (userId, options = {}) => {
   }
   
   const memberships = await Membership.find(filter)
-    .populate('group_id', 'name description createdBy isPersonal settings createdAt updatedAt')
+    .populate('group_id', 'name description createdBy isPersonal settings createdAt updatedAt iconUrl')
     .populate('invited_by', 'firstName lastName email')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
@@ -280,7 +280,7 @@ const getUserGroups = async (userId) => {
       } // Pending invitations by phone number (as number)
     ]
   })
-    .populate('group_id', 'name description createdBy isPersonal settings createdAt updatedAt')
+    .populate('group_id', 'name description createdBy isPersonal settings createdAt updatedAt iconUrl')
     .populate('invited_by', 'firstName lastName email');
 
   // Debug logging

@@ -13,6 +13,7 @@ const cronRoute = require('./cron.route');
 const membershipRoute = require('./membership.route');
 const groupRoute = require('./group.route');
 const listRoute = require('./list.route');
+const hashiconRoute = require('./hashicon.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -70,6 +71,10 @@ const defaultRoutes = [
   {
     path: '/lists',
     route: listRoute,
+  },
+  {
+    path: '/hashicon',
+    route: hashiconRoute,
   },
 ];
 

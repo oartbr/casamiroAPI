@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const httpStatus = require('http-status');
 const { Group, Membership, List } = require('../models');
 const ApiError = require('../utils/ApiError');
+const { generateAndUploadHashicon } = require('../utils/hashicon');
 
 /**
  * Create a group
@@ -46,6 +47,16 @@ const createGroup = async (groupBody) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Generate and upload hashicon after transaction commits
+    try {
+      const iconUrl = await generateAndUploadHashicon(group[0]._id.toString());
+      group[0].iconUrl = iconUrl;
+      await group[0].save();
+    } catch (hashiconError) {
+      // Log error but don't fail group creation if hashicon generation fails
+      console.error('Error generating hashicon for group:', group[0]._id, hashiconError);
+    }
 
     return group[0];
   } catch (error) {

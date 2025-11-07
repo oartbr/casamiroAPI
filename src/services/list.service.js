@@ -51,7 +51,7 @@ const queryLists = async (filter, options) => {
  * @returns {Promise<List>}
  */
 const getListById = async (id, userId = null) => {
-  const list = await List.findById(id).populate('groupId', 'name').populate('createdBy', 'firstName lastName');
+  const list = await List.findById(id).populate('groupId', 'name iconUrl').populate('createdBy', 'firstName lastName');
   
   if (!list) {
     throw new ApiError(httpStatus.NOT_FOUND, 'List not found');
@@ -115,7 +115,7 @@ const getDefaultListByGroup = async (groupId, userId) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'You are not a member of this group');
   }
 
-  let list = await List.findOne({ groupId, isDefault: true }).populate('groupId', 'name').populate('createdBy', 'firstName lastName');
+  let list = await List.findOne({ groupId, isDefault: true }).populate('groupId', 'name iconUrl').populate('createdBy', 'firstName lastName');
   
   // If no default list exists, create one
   if (!list) {
