@@ -108,7 +108,7 @@ const generateHashicon = (input, size = 100, options = {}) => {
   const cellSize = size / 5;
   // Create unique but deterministic gradient ID
   const gradientId = `bg-${hash.substring(0, 12)}`;
-  let svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">`;
+  let svg = `<svg width="${size * 0.8}" height="${size * 0.8}" xmlns="http://www.w3.org/2000/svg">`;
 
   // Background with gradient - using different colors for actual gradient effect
   const bgOpacityStart = 1;
