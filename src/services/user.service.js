@@ -30,7 +30,7 @@ const createUser = async (userBody) => {
     const group = await createGroup(
       {
         name: defaultGroupName,
-        description: `Personal group for ${user[0].firstName} ${user[0].lastName}`,
+        description: `-> ${user[0].firstName} ${user[0].lastName}`,
         createdBy: user[0]._id,
         isPersonal: true,
         settings: {
