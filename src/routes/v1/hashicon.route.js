@@ -10,4 +10,3 @@ router.get('/test', hashiconController.testHashicon);
 router.get('/test-variations', hashiconController.testHashiconVariations);
 
 module.exports = router;
-

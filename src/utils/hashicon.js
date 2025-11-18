@@ -1,4 +1,6 @@
+/* eslint-disable no-param-reassign */
 const crypto = require('crypto');
+const { put } = require('@vercel/blob');
 
 /**
  * Generate a simple hashicon SVG based on a string input
@@ -12,7 +14,7 @@ const crypto = require('crypto');
  * @returns {string} SVG string
  */
 const generateHashicon = (input, size = 100, options = {}) => {
-  const { patternType = 0, bgOpacity = 1, cellBorderRadius = 2, cellRotation = 0 } = options;
+  const { patternType = 0 } = options;
   // Create a hash from the input
   const hash = crypto.createHash('md5').update(input).digest('hex');
 
@@ -23,7 +25,9 @@ const generateHashicon = (input, size = 100, options = {}) => {
     const c = (1 - Math.abs(2 * l - 1)) * s;
     const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
     const m = l - c / 2;
-    let r, g, b;
+    let r;
+    let g;
+    let b;
 
     if (h >= 0 && h < 60) {
       r = c;
@@ -130,7 +134,7 @@ const generateHashicon = (input, size = 100, options = {}) => {
 
     // Define triangle points based on direction (relative to center)
     let points;
-    const halfSize = tSize ? tSize : cellSize / 2;
+    const halfSize = tSize || cellSize / 2;
     switch (direction % 4) {
       case 0: // Up
         points = `0,-${halfSize} -${halfSize},${halfSize} ${halfSize},${halfSize}`;
@@ -144,26 +148,27 @@ const generateHashicon = (input, size = 100, options = {}) => {
       case 3: // Right
         points = `${halfSize},0 -${halfSize},-${halfSize} -${halfSize},${halfSize}`;
         break;
+      default:
+        // Fallback to Up if direction is invalid
+        points = `0,-${halfSize} -${halfSize},${halfSize} ${halfSize},${halfSize}`;
+        break;
     }
 
     const fill = `url(#${gradientId})`;
     // Apply rotation if specified
     if (rotation !== 0 && rotation % 360 !== 0) {
       return `<g transform="translate(${centerX}, ${centerY}) rotate(${rotation})"><polygon points="${points}" fill="${
-        colorB ? colorB : color
+        colorB || color
       }"/></g>`;
     }
     return `<g transform="translate(${centerX}, ${centerY})"><polygon points="${points}" fill="${fill}"/></g>`;
   };
 
   function renderHasher(index, lat, lon, angle) {
-    let svg = '';
+    let svgHasher = '';
     for (let row = 0; row < 3; row += 1) {
       for (let col = 0; col < 3; col += 1) {
-        const hashIndex = (row * 5 + col) * index;
-        const byte = parseInt(hash.substring(hashIndex, hashIndex + 2), 16);
-        const shouldFill = 1;
-        const offsetBorder = col % 2 == 0 && row % 2 == 0 && col < 3 ? cellSize : 0;
+        const offsetBorder = col % 2 === 0 && row % 2 === 0 && col < 3 ? cellSize : 0;
         const limit = col < 4 ? 1 : 0;
 
         if (!offsetBorder && limit) {
@@ -171,13 +176,12 @@ const generateHashicon = (input, size = 100, options = {}) => {
           const y = row * (cellSize / 2);
           const cellColor = getCellColor(row * index, col * index);
           // Pattern type 3 uses 45 degrees by default, but can be overridden by cellRotation
-          const rotation = cellRotation !== 0 ? cellRotation : 45;
-          svg += renderTriangle(x + offsetBorder, y, cellColor, 0, 270);
-          svg += renderTriangle(x + cellSize + offsetBorder, y, cellColor, 0, 90);
+          svgHasher += renderTriangle(x + offsetBorder, y, cellColor, 0, 270);
+          svgHasher += renderTriangle(x + cellSize + offsetBorder, y, cellColor, 0, 90);
         }
       }
     }
-    return `<g transform="rotate(${angle}) translate(${lat}, ${lon})">${svg}</g>`;
+    return `<g transform="rotate(${angle}) translate(${lat}, ${lon})">${svgHasher}</g>`;
   }
 
   // Generate pattern based on patternType
@@ -230,8 +234,6 @@ const generateHashicon = (input, size = 100, options = {}) => {
  * @returns {Promise<string>} URL of the uploaded hashicon
  */
 const generateAndUploadHashicon = async (groupId) => {
-  const { put } = require('@vercel/blob');
-
   // Generate SVG with patternType=3 and size=100
   const svg = generateHashicon(groupId.toString(), 100, {
     patternType: 3,
