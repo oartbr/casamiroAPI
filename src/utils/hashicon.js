@@ -128,10 +128,10 @@ const generateHashicon = (input, size = 100, options = {}) => {
 
   // Helper function to render a triangle with optional rotation
   // direction: 0=up, 1=down, 2=left, 3=right
-  const renderTriangle = (x, y, color, direction = 0, rotation = 0, tSize = 0, colorB) => {
+  const renderTriangle = (x, y, color, direction = 0, rotation = 0, tSize = 0, colorB, className) => {
     const centerX = x + cellSize / 2;
     const centerY = y + cellSize / 2;
-
+    // console.log({ x, y, color, direction, rotation, tSize, colorB, className });
     // Define triangle points based on direction (relative to center)
     let points;
     const halfSize = tSize || cellSize / 2;
@@ -157,15 +157,16 @@ const generateHashicon = (input, size = 100, options = {}) => {
     const fill = `url(#${gradientId})`;
     // Apply rotation if specified
     if (rotation !== 0 && rotation % 360 !== 0) {
-      return `<g transform="translate(${centerX}, ${centerY}) rotate(${rotation})"><polygon points="${points}" fill="${
-        colorB || color
+      return `<g transform="translate(${centerX}, ${centerY}) rotate(${rotation})" class="${className}"><polygon points="${points}" fill="${
+        colorB !== 0 ? colorB : color
       }"/></g>`;
     }
-    return `<g transform="translate(${centerX}, ${centerY})"><polygon points="${points}" fill="${fill}"/></g>`;
+    return `<g transform="translate(${centerX}, ${centerY})"><polygon points="${points}" fill="${fill}" class="${className}"/></g>`;
   };
 
-  function renderHasher(index, lat, lon, angle) {
+  function renderHasher(index, lat, lon, angle, className) {
     let svgHasher = '';
+    // console.log({ index, lat, lon, angle, className });
     for (let row = 0; row < 3; row += 1) {
       for (let col = 0; col < 3; col += 1) {
         const offsetBorder = col % 2 === 0 && row % 2 === 0 && col < 3 ? cellSize : 0;
@@ -176,8 +177,26 @@ const generateHashicon = (input, size = 100, options = {}) => {
           const y = row * (cellSize / 2);
           const cellColor = getCellColor(row * index, col * index);
           // Pattern type 3 uses 45 degrees by default, but can be overridden by cellRotation
-          svgHasher += renderTriangle(x + offsetBorder, y, cellColor, 0, 270);
-          svgHasher += renderTriangle(x + cellSize + offsetBorder, y, cellColor, 0, 90);
+          svgHasher += renderTriangle(
+            x + offsetBorder,
+            y,
+            cellColor,
+            0,
+            270,
+            0,
+            0,
+            `${className} hasher${index} r${row} c${col}`
+          );
+          svgHasher += renderTriangle(
+            x + cellSize + offsetBorder,
+            y,
+            cellColor,
+            0,
+            90,
+            0,
+            0,
+            `${className} hasher${index} r${row} c${col}`
+          );
         }
       }
     }
@@ -187,41 +206,41 @@ const generateHashicon = (input, size = 100, options = {}) => {
   // Generate pattern based on patternType
   if (patternType === 0) {
     // Clean
-    svg += renderHasher(3, 0, 40, 0);
-    svg += renderHasher(2, 0, 20, 0);
-    svg += renderHasher(1, 0, 0, 0);
+    svg += renderHasher(3, 0, 40, 0, 'classA');
+    svg += renderHasher(2, 0, 20, 0, 'classB');
+    svg += renderHasher(1, 0, 0, 0, 'classC');
   } else if (patternType === 1) {
     // Leaning Tower
-    svg += renderHasher(3, 5, 40, 5);
-    svg += renderHasher(2, 5, 20, 10);
-    svg += renderHasher(1, 5, 0, 15);
+    svg += renderHasher(3, 5, 40, 5, 'classA');
+    svg += renderHasher(2, 5, 20, 10, 'classB');
+    svg += renderHasher(1, 5, 0, 15, 'classC');
   } else if (patternType === 2) {
     // Crystal box
-    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20);
-    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20);
-    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20);
-    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20);
+    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20, 0, 'classA');
+    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20, 0, 'classB');
+    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20, 0, 'classC');
+    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20, 0, 'classD');
     svg += renderHasher(1, 0, 0, 0);
   } else if (patternType === 3) {
     // Hashicon copycat
-    svg += renderTriangle(50, 30, darkerColor, 0, 270, 20);
-    svg += renderTriangle(10, 30, lighterColor, 0, 90, 20);
-    svg += renderHasher(3, 0, 40, 0);
-    svg += renderHasher(2, 0, 20, 0);
-    svg += renderHasher(1, 0, 0, 0);
-    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20);
-    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20);
-    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20);
-    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20);
+    svg += renderTriangle(50, 30, darkerColor, 0, 270, 20, 0, 'classA');
+    svg += renderTriangle(10, 30, lighterColor, 0, 90, 20, 0, 'classB');
+    svg += renderHasher(3, 0, 40, 0, 'classC');
+    svg += renderHasher(2, 0, 20, 0, 'classD');
+    svg += renderHasher(1, 0, 0, 0, 'classE');
+    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20, 0, 'classF');
+    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20, 0, 'classG');
+    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20, 0, 'classH');
+    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20, 0, 'classI');
   } else if (patternType === 4) {
     // Acrylic
     svg += renderHasher(2, 0, 20, 0);
-    svg += renderTriangle(10, 10, `url(#${gradientId}b)`, 0, 270, 20);
-    svg += renderTriangle(50, 10, `url(#${gradientId}b)`, 0, 90, 20);
-    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20);
-    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20);
-    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20);
-    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20);
+    svg += renderTriangle(10, 10, `url(#${gradientId}b)`, 0, 270, 20, 0, 'classA');
+    svg += renderTriangle(50, 10, `url(#${gradientId}b)`, 0, 90, 20, 0, 'classB');
+    svg += renderTriangle(10, 30, `url(#${gradientId})`, 0, 90, 20, 0, 'classC');
+    svg += renderTriangle(10, 50, `url(#${gradientId})`, 0, 270, 20, 0, 'classD');
+    svg += renderTriangle(50, 50, `url(#${gradientId}b)`, 0, 90, 20, 0, 'classE');
+    svg += renderTriangle(50, 30, `url(#${gradientId}b)`, 0, 270, 20, 0, 'classF');
   }
 
   svg += '</svg>';

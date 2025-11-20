@@ -64,6 +64,11 @@ if (config.env === 'production') {
 // v1 api routes
 app.use('/v1', routes);
 
+// silently handle Chrome DevTools requests
+app.use('/.well-known', (req, res) => {
+  res.status(404).end();
+});
+
 // send back a 404 error for any unknown api request
 app.use((req, res, next) => {
   next(new ApiError(httpStatus.NOT_FOUND, 'Not found'));
