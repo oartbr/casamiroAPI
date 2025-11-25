@@ -16,9 +16,10 @@ const router = express.Router();
 
 // Invitation management
 router.post('/invite', auth(), canInviteUsers(), validate(membershipValidation.createInvitation), membershipController.createInvitation);
+router.get('/invite/:token', validate(membershipValidation.getInvitationByToken), membershipController.getInvitationByToken);
 router.post('/accept/:token', validate(membershipValidation.acceptInvitation), membershipController.acceptInvitation);
 router.post('/decline/:token', validate(membershipValidation.declineInvitation), membershipController.declineInvitation);
-router.delete('/invite/:membershipId', isOwnerOrAdmin(), validate(membershipValidation.cancelInvitation), membershipController.cancelInvitation);
+router.delete('/invite/:membershipId', auth(), isOwnerOrAdmin(), validate(membershipValidation.cancelInvitation), membershipController.cancelInvitation);
 router.post('/invite/:membershipId/resend', auth(), canInviteUsers(), validate(membershipValidation.resendInvitation), membershipController.resendInvitation);
 
 // Membership management

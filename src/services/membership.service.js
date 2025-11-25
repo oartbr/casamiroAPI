@@ -11,6 +11,7 @@ const ApiError = require('../utils/ApiError');
  */
 const createMembershipInvitation = async (membershipBody) => {
   const { group_id, invitee_phone, invited_by, role = 'contributor' } = membershipBody;
+  const normalizedPhone = invitee_phone?.trim();
 
   // Validate that the group exists
   const group = await Group.findById(group_id);
@@ -28,26 +29,28 @@ const createMembershipInvitation = async (membershipBody) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'Insufficient permissions to invite users');
   }
 
-  // Check if invitation already exists
-  const existingInvitation = await Membership.findOne({
-    group_id,
-    invitee_phone,
-    status: 'pending',
-  });
-  if (existingInvitation) {
-    throw new ApiError(httpStatus.CONFLICT, 'Invitation already exists for this phone number');
-  }
-
-  // Check if user is already a member (by phone number)
-  const existingUser = await User.findOne({ phoneNumber: invitee_phone });
-  if (existingUser) {
-    const existingMembership = await Membership.findOne({
+  if (normalizedPhone) {
+    // Check if invitation already exists
+    const existingInvitation = await Membership.findOne({
       group_id,
-      user_id: existingUser._id,
-      status: 'active',
+      invitee_phone: normalizedPhone,
+      status: 'pending',
     });
-    if (existingMembership) {
-      throw new ApiError(httpStatus.CONFLICT, 'User is already a member of this group');
+    if (existingInvitation) {
+      throw new ApiError(httpStatus.CONFLICT, 'Invitation already exists for this phone number');
+    }
+
+    // Check if user is already a member (by phone number)
+    const existingUser = await User.findOne({ phoneNumber: normalizedPhone });
+    if (existingUser) {
+      const existingMembership = await Membership.findOne({
+        group_id,
+        user_id: existingUser._id,
+        status: 'active',
+      });
+      if (existingMembership) {
+        throw new ApiError(httpStatus.CONFLICT, 'User is already a member of this group');
+      }
     }
   }
 
@@ -56,12 +59,29 @@ const createMembershipInvitation = async (membershipBody) => {
 
   const membership = await Membership.create({
     group_id,
-    invitee_phone,
+    invitee_phone: normalizedPhone || undefined,
     invited_by,
     role,
     token,
     status: 'pending',
   });
+
+  return membership;
+};
+
+/**
+ * Get invitation details by token
+ * @param {string} token
+ * @returns {Promise<Membership>}
+ */
+const getInvitationByToken = async (token) => {
+  const membership = await Membership.findOne({ token, status: 'pending' })
+    .populate('group_id', 'name description iconUrl settings createdAt updatedAt')
+    .populate('invited_by', 'firstName lastName email');
+
+  if (!membership) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'Invalid or expired invitation token');
+  }
 
   return membership;
 };
@@ -120,9 +140,9 @@ const declineMembershipInvitation = async (token) => {
  */
 const getMembershipById = async (id) => {
   const membership = await Membership.findById(id)
-    .populate('user_id', 'firstName lastName email')
+    .populate('user_id', 'firstName lastName email photo')
     .populate('group_id', 'name iconUrl')
-    .populate('invited_by', 'firstName lastName email');
+    .populate('invited_by', 'firstName lastName email photo');
   
   if (!membership) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Membership not found');
@@ -146,8 +166,8 @@ const getGroupMemberships = async (groupId, options = {}) => {
   }
 
   const memberships = await Membership.find(filter)
-    .populate('user_id', 'firstName lastName email')
-    .populate('invited_by', 'firstName lastName email')
+    .populate('user_id', 'firstName lastName email photo')
+    .populate('invited_by', 'firstName lastName email photo')
     .populate('group_id', 'name iconUrl')
     .sort({ createdAt: -1 })
     .limit(limit * 1)
@@ -379,6 +399,7 @@ const cleanupExpiredInvitations = async () => {
 
 module.exports = {
   createMembershipInvitation,
+  getInvitationByToken,
   acceptMembershipInvitation,
   declineMembershipInvitation,
   getMembershipById,
