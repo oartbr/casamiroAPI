@@ -4,7 +4,7 @@ const { objectId } = require('./custom.validation');
 const createInvitation = {
   body: Joi.object().keys({
     group_id: Joi.string().required().custom(objectId),
-    invitee_phone: Joi.string().required().min(10).max(15),
+    invitee_phone: Joi.string().min(10).max(15).allow(null, '').optional(),
     invited_by: Joi.string().required().custom(objectId),
     role: Joi.string().valid('admin', 'editor', 'contributor').default('contributor'),
   }),
@@ -20,6 +20,12 @@ const acceptInvitation = {
 };
 
 const declineInvitation = {
+  params: Joi.object().keys({
+    token: Joi.string().required().min(32).max(64),
+  }),
+};
+
+const getInvitationByToken = {
   params: Joi.object().keys({
     token: Joi.string().required().min(32).max(64),
   }),
@@ -100,6 +106,7 @@ module.exports = {
   createInvitation,
   acceptInvitation,
   declineInvitation,
+  getInvitationByToken,
   cancelInvitation,
   resendInvitation,
   getGroupMemberships,

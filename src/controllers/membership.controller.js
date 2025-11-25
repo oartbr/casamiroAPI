@@ -13,6 +13,17 @@ const createInvitation = catchAsync(async (req, res) => {
 });
 
 /**
+ * Get invitation details by token
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ */
+const getInvitationByToken = catchAsync(async (req, res) => {
+  const { token } = req.params;
+  const membership = await membershipService.getInvitationByToken(token);
+  res.status(httpStatus.OK).send(membership);
+});
+
+/**
  * Accept a membership invitation
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
@@ -166,6 +177,7 @@ const cleanupExpiredInvitations = catchAsync(async (req, res) => {
 
 module.exports = {
   createInvitation,
+  getInvitationByToken,
   acceptInvitation,
   declineInvitation,
   cancelInvitation,

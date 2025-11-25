@@ -18,12 +18,13 @@ const membershipSchema = mongoose.Schema(
       trim: true,
       validate: {
         validator(value) {
-          // Required only if user_id is null (pending invitation)
-          if (!this.user_id && !value) return false;
           // Optional validation for phone format (basic check for length)
-          return !value || (value.length >= 10 && value.length <= 15);
+          if (!value) {
+            return true;
+          }
+          return value.length >= 10 && value.length <= 15;
         },
-        message: 'Valid phone number is required for pending invitations',
+        message: 'Valid phone number is required when provided',
       },
     },
     invited_by: {
@@ -81,10 +82,6 @@ membershipSchema.pre('validate', function (next) {
   // Ensure user_id is set for active memberships
   if (this.status === 'active' && !this.user_id) {
     next(new Error('User ID is required for active memberships'));
-  }
-  // Ensure invitee_phone is set for pending invitations
-  if (this.status === 'pending' && !this.invitee_phone) {
-    next(new Error('Invitee phone is required for pending invitations'));
   }
   next();
 });

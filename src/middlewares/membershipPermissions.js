@@ -1,3 +1,4 @@
+/* eslint-disable global-require */
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
 const ApiError = require('../utils/ApiError');
@@ -39,20 +40,20 @@ const checkRole = async (groupId, userId, requiredRoles) => {
   // First check if user is the group creator (they automatically have admin privileges)
   const { Group } = require('../models');
   const group = await Group.findById(groupId);
-  
+
   if (group && group.createdBy.toString() === userId.toString()) {
     // Group creator has all privileges, return a mock membership with admin role
     return {
       role: 'admin',
       status: 'active',
       user_id: userId,
-      group_id: groupId
+      group_id: groupId,
     };
   }
-  
+
   // If not creator, check membership role
   const membership = await checkMembership(groupId, userId, 'active');
-  
+
   if (!requiredRoles.includes(membership.role)) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
@@ -72,7 +73,7 @@ const requireMembership = (requiredStatus = 'active') => {
   return async (req, res, next) => {
     try {
       const groupId = req.params.groupId || req.body.group_id || req.query.groupId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!groupId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Group ID is required'));
@@ -99,7 +100,7 @@ const requireAdmin = () => {
   return async (req, res, next) => {
     try {
       const groupId = req.params.groupId || req.body.group_id || req.query.groupId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!groupId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Group ID is required'));
@@ -126,7 +127,7 @@ const requireAdminOrEditor = () => {
   return async (req, res, next) => {
     try {
       const groupId = req.params.groupId || req.body.group_id || req.query.groupId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!groupId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Group ID is required'));
@@ -154,7 +155,7 @@ const requireRole = (requiredRoles) => {
   return async (req, res, next) => {
     try {
       const groupId = req.params.groupId || req.body.group_id || req.query.groupId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!groupId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Group ID is required'));
@@ -184,8 +185,8 @@ const requireRole = (requiredRoles) => {
 const canManageMembership = () => {
   return async (req, res, next) => {
     try {
-      const membershipId = req.params.membershipId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
+      const { membershipId } = req.params;
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!membershipId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Membership ID is required'));
@@ -217,7 +218,10 @@ const canManageMembership = () => {
           status: 'active',
         });
         if (adminCount <= 1) {
-          throw new ApiError(httpStatus.BAD_REQUEST, 'Cannot manage your own membership: group must have at least one admin');
+          throw new ApiError(
+            httpStatus.BAD_REQUEST,
+            'Cannot manage your own membership: group must have at least one admin'
+          );
         }
       }
 
@@ -238,7 +242,7 @@ const canInviteUsers = () => {
   return async (req, res, next) => {
     try {
       const groupId = req.params.groupId || req.body.group_id || req.query.groupId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!groupId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Group ID is required'));
@@ -266,9 +270,7 @@ const canViewGroup = () => {
   return async (req, res, next) => {
     try {
       const groupId = req.params.groupId || req.body.group_id || req.query.groupId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
-
-
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!groupId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Group ID is required'));
@@ -280,9 +282,10 @@ const canViewGroup = () => {
 
       // Check if user has any membership in the group (active, pending, etc.)
       // First get the user to check their phone number for pending invitations
+      // eslint-disable-next-line global-require
       const { User } = require('../models');
       const user = await User.findById(userId);
-      
+
       if (!user) {
         throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
       }
@@ -291,15 +294,15 @@ const canViewGroup = () => {
         group_id: groupId,
         $or: [
           { user_id: userId }, // Active memberships
-          { 
-            invitee_phone: user.phoneNumber?.toString(), 
-            status: 'pending' 
+          {
+            invitee_phone: user.phoneNumber.toString() || '',
+            status: 'pending',
           }, // Pending invitations by phone number (convert to string)
-          { 
-            invitee_phone: user.phoneNumber, 
-            status: 'pending' 
-          } // Pending invitations by phone number (as number)
-        ]
+          {
+            invitee_phone: user.phoneNumber,
+            status: 'pending',
+          }, // Pending invitations by phone number (as number)
+        ],
       });
 
       if (!membership) {
@@ -321,8 +324,8 @@ const canViewGroup = () => {
 const isOwnerOrAdmin = () => {
   return async (req, res, next) => {
     try {
-      const membershipId = req.params.membershipId;
-      const userId = req.user?.id || req.body.userId || req.body.user_id;
+      const { membershipId } = req.params;
+      const userId = (req.user && req.user.id) || req.body.userId || req.body.user_id;
 
       if (!membershipId) {
         return next(new ApiError(httpStatus.BAD_REQUEST, 'Membership ID is required'));
@@ -338,7 +341,7 @@ const isOwnerOrAdmin = () => {
       }
 
       // Check if user is the owner of the membership
-      if (membership.user_id.toString() === userId) {
+      if (membership.user_id && membership.user_id.toString() === userId.toString()) {
         req.membership = membership;
         req.isOwner = true;
         return next();
