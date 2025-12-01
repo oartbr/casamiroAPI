@@ -10,6 +10,8 @@ router.post('/check', validate(notaValidation.checkNota), notaController.checkNo
 router.get('/getAll', validate(notaValidation.getAll), notaController.getAll);
 router.get('/load', validate(notaValidation.loadNota), notaController.loadNota);
 router.get('/details/:id', validate(notaValidation.getNota), notaController.getNota);
+router.get('/spending-statistics', validate(notaValidation.getSpendingStatistics), notaController.getSpendingStatistics);
+router.get('/last-30-days', validate(notaValidation.getLast30DaysNotas), notaController.getLast30DaysNotas);
 /*
 router.get('/getAll', validate(notaValidation.getnotas), notaController.getnotas);
 router.get('/:id', validate(notaValidation.getnota), notaController.getnota);

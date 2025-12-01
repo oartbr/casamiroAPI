@@ -32,9 +32,25 @@ const loadNota = {
   }),
 };
 
+const getSpendingStatistics = {
+  query: Joi.object().keys({
+    userId: Joi.string().required(),
+    groupId: Joi.string().optional(),
+  }),
+};
+
+const getLast30DaysNotas = {
+  query: Joi.object().keys({
+    userId: Joi.string().required(),
+    groupId: Joi.string().optional(),
+  }),
+};
+
 module.exports = {
   checkNota,
   getAll,
   loadNota,
   get,
+  getSpendingStatistics,
+  getLast30DaysNotas,
 };
