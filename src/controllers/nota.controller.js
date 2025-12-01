@@ -54,6 +54,18 @@ const deleteNota = catchAsync(async (req, res) => {
   res.status(httpStatus.OK).send({ message: `Nota ${nota.notaId} successfully deleted` });
 });
 
+const getSpendingStatistics = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['userId', 'groupId']);
+  const statistics = await notaService.getSpendingStatistics(filter);
+  res.status(httpStatus.OK).send(statistics);
+});
+
+const getLast30DaysNotas = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ['userId', 'groupId']);
+  const notas = await notaService.getLast30DaysNotas(filter);
+  res.status(httpStatus.OK).send({ notas });
+});
+
 module.exports = {
   checkNota,
   getAll,
@@ -62,4 +74,6 @@ module.exports = {
   loadNota,
   updateNota,
   deleteNota,
+  getSpendingStatistics,
+  getLast30DaysNotas,
 };
