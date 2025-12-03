@@ -12,3 +12,4 @@ module.exports.callService = require('./call.service');
 module.exports.notaService = require('./nota.service');
 module.exports.membershipService = require('./membership.service');
 module.exports.groupService = require('./group.service');
+module.exports.canonicalProductService = require('./canonicalProduct.service');

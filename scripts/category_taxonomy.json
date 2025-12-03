@@ -1,0 +1,139 @@
+{
+    "categories": {
+      "dairy": {
+        "label": "Laticínios",
+        "subcategories": {
+          "milk_uht": "Leite UHT",
+          "milk_fresh": "Leite fresco",
+          "yogurt": "Iogurtes",
+          "cheese": "Queijos",
+          "butter_margarine": "Manteiga e margarina",
+          "cream": "Creme de leite e nata",
+          "milk_powder": "Leite em pó",
+          "desserts_dairy": "Sobremesas lácteas"
+        }
+      },
+      "beverages": {
+        "label": "Bebidas",
+        "subcategories": {
+          "soda": "Refrigerantes",
+          "water": "Água",
+          "juices": "Sucos",
+          "beer": "Cervejas",
+          "wine": "Vinhos",
+          "spirits": "Destilados",
+          "energy_drinks": "Energéticos",
+          "tea": "Chás",
+          "coffee": "Cafés e solúveis"
+        }
+      },
+      "bakery": {
+        "label": "Padaria",
+        "subcategories": {
+          "bread": "Pães",
+          "cakes": "Bolos",
+          "cookies": "Biscoitos e cookies",
+          "toasts": "Torradas",
+          "sweet_bread": "Pães doces",
+          "pastry": "Salgados e folhados"
+        }
+      },
+      "grocery": {
+        "label": "Mercearia",
+        "subcategories": {
+          "rice": "Arroz",
+          "beans": "Feijão",
+          "pasta": "Massas",
+          "flour": "Farinha",
+          "sugar": "Açúcar",
+          "oil": "Óleos e gorduras",
+          "canned_food": "Conservas e enlatados",
+          "snacks": "Salgadinhos e snacks",
+          "condiments": "Temperos e condimentos",
+          "sauces": "Molhos",
+          "breakfast_items": "Itens de café da manhã (café, achocolatado, cereais etc.)"
+        }
+      },
+      "produce": {
+        "label": "Hortifruti",
+        "subcategories": {
+          "fruits": "Frutas",
+          "vegetables": "Legumes",
+          "greens": "Verduras",
+          "roots": "Tubérculos e raízes",
+          "herbs": "Ervas frescas"
+        }
+      },
+      "meat": {
+        "label": "Carnes e Aves",
+        "subcategories": {
+          "beef": "Carne bovina",
+          "pork": "Carne suína",
+          "poultry": "Aves",
+          "fish": "Peixes",
+          "seafood": "Frutos do mar",
+          "processed_meat": "Carnes processadas (presunto, linguiça, salsicha etc.)"
+        }
+      },
+      "frozen": {
+        "label": "Congelados",
+        "subcategories": {
+          "frozen_meals": "Pratos prontos congelados",
+          "frozen_vegetables": "Legumes congelados",
+          "frozen_meat": "Carnes congeladas",
+          "ice_cream": "Sorvetes e picolés"
+        }
+      },
+      "canned": {
+        "label": "Enlatados e Conservas",
+        "subcategories": {
+          "canned_vegetables": "Legumes enlatados",
+          "canned_fish": "Peixes enlatados",
+          "canned_meat": "Carnes enlatadas",
+          "pickles": "Picles",
+          "preserves": "Conservas em geral"
+        }
+      },
+      "cleaning": {
+        "label": "Limpeza",
+        "subcategories": {
+          "laundry": "Roupas (sabão, amaciante etc.)",
+          "dishwashing": "Louças (detergente, pastilhas etc.)",
+          "multiuse": "Multiuso",
+          "disinfectants": "Desinfetantes",
+          "paper_products": "Papel toalha, guardanapos e afins"
+        }
+      },
+      "personal_care": {
+        "label": "Higiene e Cuidados Pessoais",
+        "subcategories": {
+          "oral_care": "Higiene bucal",
+          "hair_care": "Cabelos",
+          "body_care": "Corpo",
+          "deodorants": "Desodorantes",
+          "female_care": "Higiene feminina",
+          "shaving": "Barbear",
+          "soap": "Sabonetes"
+        }
+      },
+      "baby": {
+        "label": "Bebê",
+        "subcategories": {
+          "diapers": "Fraldas",
+          "baby_food": "Alimentação infantil",
+          "baby_hygiene": "Higiene do bebê",
+          "baby_care": "Cuidados gerais com o bebê"
+        }
+      },
+      "pet": {
+        "label": "Pet",
+        "subcategories": {
+          "dog_food": "Ração para cachorro",
+          "cat_food": "Ração para gato",
+          "pet_hygiene": "Higiene pet",
+          "pet_care": "Acessórios e cuidados pet"
+        }
+      }
+    }
+  }
+  

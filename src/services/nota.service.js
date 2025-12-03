@@ -3,6 +3,7 @@ const { Nota, User, Vendor } = require('../models');
 // const ApiError = require('../utils/ApiError');
 const CodeGenerator = require('../utils/generator');
 const { SelectStateScraper } = require('../utils/scrapers/selectStateScraper');
+const canonicalProductService = require('./canonicalProduct.service');
 
 /**
  * check a nota
@@ -48,21 +49,18 @@ const queryNotas = async (filter, options) => {
   return users; */
 
   const parsedFilter = filter.filters ? JSON.parse(filter.filters) : { status: [] };
-  // Default to sorting by purchaseDate descending (newest first)
-  const parsedSort = 'sort' in options ? JSON.parse(options.sort) : '[{"orderBy": "purchaseDate", "order": "desc"}]';
-  
+  const parsedSort = 'sort' in options ? JSON.parse(options.sort) : '[{"orderBy": "updatedAt", "order": "desc"}]';
+
   // Add group filtering if groupId is provided
   if (parsedFilter.groupId) {
     parsedFilter.groupId = parsedFilter.groupId;
   }
-  
+
   const adjustedOptions = {
     limit: parseInt(options.limit, 10),
-    page: parseInt(options.page, 10) || 1,
+    offset: (parseInt(options.page, 10) - 1) * parseInt(options.limit, 10),
     sortBy:
-      parsedSort && parsedSort[0] && parsedSort[0].orderBy
-        ? `${parsedSort[0].orderBy}:${parsedSort[0].order || 'desc'}`
-        : 'purchaseDate:desc',
+      parsedSort && parsedSort[0].order === 'desc' ? `{ -${parsedSort[0].orderBy}: -1 }` : `{ ${parsedSort[0].orderBy}: 1 }`,
   };
   // console.log({ filterResults, adjustedOptions });
   const notas = await Nota.paginate(parsedFilter, adjustedOptions);
@@ -105,19 +103,44 @@ const loadNota = async (filter, options) => {
     vendorName: existingVendor.name,
   });
 
-  return { existing };
-};
+  // Extract and save products from nota items
+  // Process items asynchronously to avoid blocking
+  if (notaData.items && Array.isArray(notaData.items) && notaData.items.length > 0) {
+    const userId = existing.user?.toString() || 'system';
+    const groupId = existing.groupId?.toString() || null;
 
-/**
- * Get nota by id
- * @param {ObjectId} id
- * @returns {Promise<Nota>}
- */
-const getNotaById = async (id) => {
-  const nota = await Nota.findById(id);
-  const vendor = await Vendor.findById(nota.vendor);
-  nota.vendor = vendor;
-  return nota;
+    // Process items in parallel, but limit concurrency to avoid overwhelming OpenAI API
+    const processItems = async () => {
+      const batchSize = 5; // Process 5 items at a time
+      for (let i = 0; i < notaData.items.length; i += batchSize) {
+        const batch = notaData.items.slice(i, i + batchSize);
+        await Promise.all(
+          batch.map(async (item) => {
+            try {
+              // Only process items with a product name
+              if (item.product || item.name) {
+                await canonicalProductService.createOrUpdateFromNotaItem(item, {
+                  userId,
+                  groupId,
+                  useOpenAI: true, // Enable OpenAI classification
+                });
+              }
+            } catch (error) {
+              // Log error but don't fail the entire nota processing
+              console.error(`Error processing product from nota item:`, error);
+            }
+          })
+        );
+      }
+    };
+
+    // Process items asynchronously (don't await to avoid blocking)
+    processItems().catch((error) => {
+      console.error('Error processing nota items for canonical products:', error);
+    });
+  }
+
+  return { existing };
 };
 
 /**
@@ -141,9 +164,7 @@ const getSpendingStatistics = async (filter) => {
 
   if (groupId) {
     const mongoose = require('mongoose');
-    baseFilter.groupId = mongoose.Types.ObjectId.isValid(groupId) 
-      ? mongoose.Types.ObjectId(groupId) 
-      : groupId;
+    baseFilter.groupId = mongoose.Types.ObjectId.isValid(groupId) ? mongoose.Types.ObjectId(groupId) : groupId;
   }
 
   // Current week (Monday to Sunday)
@@ -187,13 +208,7 @@ const getSpendingStatistics = async (filter) => {
   // });
 
   // Aggregate queries - all based on purchaseDate
-  const [
-    currentWeekTotal,
-    last7DaysTotal,
-    last30DaysTotal,
-    currentMonthTotal,
-    previousMonthTotal,
-  ] = await Promise.all([
+  const [currentWeekTotal, last7DaysTotal, last30DaysTotal, currentMonthTotal, previousMonthTotal] = await Promise.all([
     Nota.aggregate([
       {
         $match: {
@@ -300,6 +315,18 @@ const getSpendingStatistics = async (filter) => {
   // });
 
   return result;
+};
+
+/**
+ * Get nota by id
+ * @param {ObjectId} id
+ * @returns {Promise<Nota>}
+ */
+const getNotaById = async (id) => {
+  const nota = await Nota.findById(id);
+  const vendor = await Vendor.findById(nota.vendor);
+  nota.vendor = vendor;
+  return nota;
 };
 
 /**

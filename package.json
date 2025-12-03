@@ -50,6 +50,7 @@
     "prettier"
   ],
   "dependencies": {
+    "@openai/agents": "^0.1.11",
     "@vercel/blob": "^0.23.4",
     "aws-sdk": "^2.1687.0",
     "axios": "^1.7.7",
@@ -78,6 +79,7 @@
     "next": "^14.2.7",
     "node": "^22.6.0",
     "nodemailer": "^6.3.1",
+    "openai": "^4.0.0",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
     "pdfkit": "^0.16.0",
@@ -89,7 +91,8 @@
     "validator": "^13.0.0",
     "vercel": "^36.0.0",
     "winston": "^3.2.1",
-    "xss-clean": "^0.1.1"
+    "xss-clean": "^0.1.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "coveralls": "^3.0.7",

@@ -14,6 +14,7 @@ const membershipRoute = require('./membership.route');
 const groupRoute = require('./group.route');
 const listRoute = require('./list.route');
 const hashiconRoute = require('./hashicon.route');
+const canonicalProductRoute = require('./canonicalProduct.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -75,6 +76,10 @@ const defaultRoutes = [
   {
     path: '/hashicon',
     route: hashiconRoute,
+  },
+  {
+    path: '/canonical-products',
+    route: canonicalProductRoute,
   },
 ];
 
