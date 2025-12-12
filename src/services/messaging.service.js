@@ -53,6 +53,15 @@ const confirmWhatsCodeLogin = async (code, phoneNumber) => {
   const phoneNumberAsNumber = parseInt(phoneNumber, 10);
   const user = await User.findOne({ phoneNumber: phoneNumberAsNumber });
 
+  // If user exists and has GUEST role, upgrade to USER role
+  if (user && user.role && user.role.id === 3 && user.role.name === 'GUEST') {
+    user.role = {
+      id: 2,
+      name: 'USER',
+    };
+    await user.save();
+  }
+
   return { user, phoneNumber, confirmed: true };
 };
 

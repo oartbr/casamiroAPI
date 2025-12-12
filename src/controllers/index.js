@@ -10,3 +10,4 @@ module.exports.skuController = require('./sku.controller');
 module.exports.filesController = require('./files.controller');
 module.exports.callController = require('./call.controller');
 module.exports.canonicalProductController = require('./canonicalProduct.controller');
+module.exports.referralController = require('./referral.controller');

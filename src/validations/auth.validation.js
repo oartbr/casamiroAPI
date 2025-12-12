@@ -16,6 +16,7 @@ const register = {
     }),
     password: Joi.string().required(),
     phoneNumber: Joi.string().required(),
+    referredByCode: Joi.string().length(6).uppercase().optional(),
   }),
 };
 

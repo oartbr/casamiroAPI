@@ -1,9 +1,29 @@
 const httpStatus = require('http-status');
 const mongoose = require('mongoose');
-const { User, Group, Membership } = require('../models');
+const { User, Group, Membership, Referral } = require('../models');
 const ApiError = require('../utils/ApiError');
 const { createGroup } = require('./group.service');
 const { generateAndUploadHashicon } = require('../utils/hashicon');
+
+/**
+ * Generate a unique 6-character alphanumeric referral code
+ * @returns {Promise<string>}
+ */
+const generateReferralCode = async () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code;
+  let isUnique = false;
+  
+  while (!isUnique) {
+    code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    isUnique = !(await User.isReferralCodeTaken(code));
+  }
+  
+  return code;
+};
 
 /**
  * Create a user
@@ -22,6 +42,26 @@ const createUser = async (userBody) => {
   session.startTransaction();
 
   try {
+    // Generate referral code for the new user
+    const referralCode = await generateReferralCode();
+    userBody.referralCode = referralCode;
+
+    // Handle referral if referredBy code is provided
+    if (userBody.referredByCode) {
+      try {
+        const referrer = await User.getUserByReferralCode(userBody.referredByCode);
+        // Only set referredBy if referrer exists and is not the same user
+        if (referrer && referrer._id.toString() !== userBody._id?.toString()) {
+          userBody.referredBy = referrer._id;
+        }
+      } catch (error) {
+        // Silently ignore invalid referral codes - don't block registration
+        console.log('Invalid referral code provided:', userBody.referredByCode);
+      }
+      // Remove referredByCode from userBody as it's not a user field
+      delete userBody.referredByCode;
+    }
+
     // Create the user
     const user = await User.create([userBody], { session });
 
@@ -64,6 +104,20 @@ const createUser = async (userBody) => {
     // Set the personal group as the active group
     user[0].activeGroupId = group._id;
     await user[0].save({ session });
+
+    // Create referral record if user was referred
+    if (userBody.referredBy) {
+      await Referral.create(
+        [
+          {
+            referrer: userBody.referredBy,
+            referredUser: user[0]._id,
+            referralCode: userBody.referralCode,
+          },
+        ],
+        { session }
+      );
+    }
 
     await session.commitTransaction();
     session.endSession();
@@ -396,6 +450,106 @@ const setActiveGroup = async (userId, groupId) => {
   return user;
 };
 
+/**
+ * Get user referral statistics
+ * @param {ObjectId} userId
+ * @returns {Promise<Object>} Referral statistics
+ */
+const getUserReferralStats = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  // Generate referral code if user doesn't have one (for existing users)
+  if (!user.referralCode) {
+    user.referralCode = await generateReferralCode();
+    await user.save();
+  }
+
+  const now = new Date();
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [total, weekly, monthly] = await Promise.all([
+    Referral.countDocuments({ referrer: userId }),
+    Referral.countDocuments({
+      referrer: userId,
+      createdAt: { $gte: weekAgo },
+    }),
+    Referral.countDocuments({
+      referrer: userId,
+      createdAt: { $gte: monthAgo },
+    }),
+  ]);
+
+  return {
+    referralCode: user.referralCode,
+    totalReferrals: total,
+    weeklyReferrals: weekly,
+    monthlyReferrals: monthly,
+  };
+};
+
+/**
+ * Get referral rankings
+ * @param {string} period - 'week', 'month', or 'all'
+ * @param {number} limit - Number of results to return
+ * @returns {Promise<Array>} Rankings
+ */
+const getReferralRankings = async (period = 'all', limit = 10) => {
+  let dateFilter = {};
+  
+  if (period === 'week') {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    dateFilter = { createdAt: { $gte: weekAgo } };
+  } else if (period === 'month') {
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    dateFilter = { createdAt: { $gte: monthAgo } };
+  }
+
+  const rankings = await Referral.aggregate([
+    { $match: dateFilter },
+    {
+      $group: {
+        _id: '$referrer',
+        count: { $sum: 1 },
+      },
+    },
+    { $sort: { count: -1 } },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'user',
+      },
+    },
+    { $unwind: '$user' },
+    {
+      $project: {
+        _id: 1,
+        count: 1,
+        firstName: '$user.firstName',
+        lastName: '$user.lastName',
+        email: '$user.email',
+        referralCode: '$user.referralCode',
+      },
+    },
+  ]);
+
+  return rankings.map((rank, index) => ({
+    rank: index + 1,
+    userId: rank._id,
+    firstName: rank.firstName,
+    lastName: rank.lastName,
+    email: rank.email,
+    referralCode: rank.referralCode,
+    referralCount: rank.count,
+  }));
+};
+
 module.exports = {
   createUser,
   queryUsers,
@@ -406,4 +560,6 @@ module.exports = {
   getUserMemberships,
   getUserGroups,
   setActiveGroup,
+  getUserReferralStats,
+  getReferralRankings,
 };
