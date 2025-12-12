@@ -1,11 +1,34 @@
 const httpStatus = require('http-status');
 const catchAsync = require('../utils/catchAsync');
-const { authService, userService, tokenService, emailService } = require('../services');
+const { authService, userService, tokenService, emailService, messagingService } = require('../services');
+const CodeGenerator = require('../utils/generator');
 
 const register = catchAsync(async (req, res) => {
   const { user, group } = await userService.createUser(req.body);
-  const tokens = await tokenService.generateAuthTokens(user);
-  res.status(httpStatus.CREATED).send({ user, tokens, group });
+  
+  // Send WhatsApp verification code instead of generating tokens
+  // User will need to verify phone before they can login
+  const oCode = new CodeGenerator(5, 'number');
+  // Ensure phone number has + prefix for WhatsApp
+  let phoneNumber = user.phoneNumber ? user.phoneNumber.toString() : null;
+  if (phoneNumber && !phoneNumber.startsWith('+')) {
+    phoneNumber = `+${phoneNumber}`;
+  }
+  
+  if (phoneNumber) {
+    await messagingService.sendMessageLogin(phoneNumber, oCode.code);
+  }
+  
+  // Return user without tokens - tokens will be generated after phone verification
+  res.status(httpStatus.CREATED).send({ 
+    user: {
+      ...user.toJSON(),
+      // Don't include sensitive data
+      password: undefined,
+    },
+    group,
+    message: 'User created. Verification code sent to WhatsApp.',
+  });
 });
 
 const login = catchAsync(async (req, res) => {

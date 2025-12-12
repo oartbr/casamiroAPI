@@ -16,6 +16,10 @@ const loginUserWithEmailAndPassword = async (email, password) => {
   if (!user || !(await user.isPasswordMatch(password))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'Incorrect email or password');
   }
+  // Prevent GUEST users from logging in - they must verify phone first
+  if (user.role && user.role.id === 3 && user.role.name === 'GUEST') {
+    throw new ApiError(httpStatus.FORBIDDEN, 'Please verify your phone number before logging in. Check your WhatsApp for the verification code.');
+  }
   return user;
 };
 

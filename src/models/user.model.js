@@ -83,8 +83,8 @@ const userSchema = mongoose.Schema(
         },
       },
       default: {
-        id: 2,
-        name: 'USER',
+        id: 3,
+        name: 'GUEST',
       },
     },
     isEmailVerified: {
@@ -98,6 +98,20 @@ const userSchema = mongoose.Schema(
     activeGroupId: {
       type: mongoose.SchemaTypes.ObjectId,
       ref: 'Group',
+      required: false,
+    },
+    referralCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+      uppercase: true,
+      minlength: 6,
+      maxlength: 6,
+    },
+    referredBy: {
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'User',
       required: false,
     },
   },
@@ -157,6 +171,26 @@ userSchema.statics.getUserByPhoneNumber = async function (phoneNumber) {
     return null;
   }
   return user;
+};
+
+/**
+ * Get user by referral code
+ * @param {string} referralCode - The referral code
+ * @returns {Promise<User>}
+ */
+userSchema.statics.getUserByReferralCode = async function (referralCode) {
+  const user = await this.findOne({ referralCode: referralCode.toUpperCase() });
+  return user;
+};
+
+/**
+ * Check if referral code is taken
+ * @param {string} referralCode - The referral code
+ * @returns {Promise<boolean>}
+ */
+userSchema.statics.isReferralCodeTaken = async function (referralCode) {
+  const user = await this.findOne({ referralCode: referralCode.toUpperCase() });
+  return !!user;
 };
 
 /**

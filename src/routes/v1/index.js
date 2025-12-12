@@ -15,6 +15,7 @@ const groupRoute = require('./group.route');
 const listRoute = require('./list.route');
 const hashiconRoute = require('./hashicon.route');
 const canonicalProductRoute = require('./canonicalProduct.route');
+const referralRoute = require('./referral.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -80,6 +81,10 @@ const defaultRoutes = [
   {
     path: '/canonical-products',
     route: canonicalProductRoute,
+  },
+  {
+    path: '/referrals',
+    route: referralRoute,
   },
 ];
 
