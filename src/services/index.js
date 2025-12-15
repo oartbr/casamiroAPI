@@ -13,3 +13,4 @@ module.exports.notaService = require('./nota.service');
 module.exports.membershipService = require('./membership.service');
 module.exports.groupService = require('./group.service');
 module.exports.canonicalProductService = require('./canonicalProduct.service');
+module.exports.userCommService = require('./userComm.service');
