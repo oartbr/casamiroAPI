@@ -1,7 +1,28 @@
-const { tool, Agent, Runner, withTrace } = require('@openai/agents');
-const { z } = require('zod');
 const { userCommService } = require('./index');
 const logger = require('../config/logger');
+
+// Dynamically load OpenAI packages with error handling
+let agents;
+let z;
+try {
+  /* eslint-disable global-require */
+  agents = require('@openai/agents');
+  z = require('zod');
+  /* eslint-enable global-require */
+} catch (error) {
+  logger.error('@openai/agents or zod package not available:', error.message);
+  throw new Error(
+    'Required packages (@openai/agents, zod) are not installed. Please install them: npm install @openai/agents zod'
+  );
+}
+
+// Validate API key
+if (!process.env.OPENAI_API_KEY) {
+  logger.warn('OPENAI_API_KEY is not set. WhatsApp agent service may not work properly.');
+}
+
+// Extract required functions from agents package
+const { tool, Agent, Runner, withTrace } = agents;
 
 // Tool definitions
 const getUserInfoByPhone = tool({
@@ -247,7 +268,7 @@ const isphonenumberauser = new Agent({
 // Agent for adding items to list - instructions will be set dynamically
 const additem2listInstructions = (runContext) => {
   const { userContext } = runContext.context || {};
-  console.log(userContext, userContext.lists, userContext.lists);
+  // console.log(userContext, userContext.lists, userContext.lists);
   let instructions = `You are an assistant that helps users add items to their shopping lists.
 
 IMPORTANT: You MUST use the tools to add items. Do not just respond with text.
@@ -346,6 +367,11 @@ When a user wants to see a list, you should:
  * @returns {Promise<Object>} Workflow result
  */
 const runWorkflow = async (workflow) => {
+  // Validate API key is set (packages are already validated at module load)
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY is not set. Please configure the OpenAI API key in your environment variables.');
+  }
+
   // Remove unnecessary 'await' on return value per lint warning
   return withTrace('New agent', async () => {
     const state = {
