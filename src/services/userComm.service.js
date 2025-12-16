@@ -11,7 +11,13 @@ const listService = require('./list.service');
  */
 const getUserContext = async (phoneNumber) => {
   // Convert phoneNumber to number for proper matching since User model stores it as Number
-  const phoneNumberAsNumber = typeof phoneNumber === 'string' ? parseInt(phoneNumber.replace(/\D/g, ''), 10) : phoneNumber;
+  const fixedPhoneNumber =
+    phoneNumber.length === 12 && phoneNumber.slice(0, 2) === '55'
+      ? `${phoneNumber.slice(0, 4)}9${phoneNumber.slice(4)}`
+      : phoneNumber;
+
+  const phoneNumberAsNumber =
+    typeof fixedPhoneNumber === 'string' ? parseInt(fixedPhoneNumber.replace(/\D/g, ''), 10) : fixedPhoneNumber;
 
   // Find user by phone number
   const user = await User.getUserByPhoneNumber(phoneNumberAsNumber);
