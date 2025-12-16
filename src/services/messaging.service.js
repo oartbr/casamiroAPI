@@ -146,9 +146,31 @@ const sendMessageLogin = async (phoneNumber, message) => {
   // return true;
 };
 
+/**
+ * Send a regular WhatsApp message (not a verification code)
+ * @param {string} phoneNumber - Recipient phone number (without whatsapp: prefix)
+ * @param {string} message - Message text to send
+ * @returns {Promise<Object>} Twilio message response
+ */
+const sendWhatsAppMessage = async (phoneNumber, message) => {
+  const toPhoneNumber = `whatsapp:${phoneNumber}`;
+
+  try {
+    const response = await messagingClient.messages.create({
+      body: message,
+      from: config.twilio.phoneNumber,
+      to: toPhoneNumber,
+    });
+    return response;
+  } catch (error) {
+    throw new ApiError(httpStatus.BAD_REQUEST, `Failed to send WhatsApp message: ${error.message}`);
+  }
+};
+
 module.exports = {
   sendMessage,
   confirmWhatsCode,
   sendMessageLogin,
   confirmWhatsCodeLogin,
+  sendWhatsAppMessage,
 };
