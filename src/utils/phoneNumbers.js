@@ -1,4 +1,8 @@
-const fixPhoneNumber = (phoneNumber) => {
+const fixPhoneNumber = (originalPhoneNumber) => {
+  let phoneNumber = originalPhoneNumber;
+  if (typeof phoneNumber === 'string' && phoneNumber.length > 0 && phoneNumber[0] !== '+') {
+    phoneNumber = `+${phoneNumber}`;
+  }
   // Convert phoneNumber to number for proper matching since User model stores it as Number
   const fixedPhoneNumber =
     phoneNumber.length === 13 && phoneNumber.slice(0, 3) === '+55'
