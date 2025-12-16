@@ -1,7 +1,7 @@
 const { runWorkflow } = require('./whatsappAgent.service');
 const { sendWhatsAppMessage } = require('./messaging.service');
 const logger = require('../config/logger');
-
+const { fixPhoneNumber } = require('../utils/phoneNumbers');
 /**
  * Process incoming WhatsApp message from Twilio
  * @param {Object} messageData - Twilio webhook data
@@ -14,9 +14,8 @@ const processIncomingMessage = async (messageData) => {
   try {
     const messageBody = messageData.Body || messageData.body || '';
     const fromNumber = messageData.From || messageData.from || '';
-
     // Extract phone number from Twilio format (whatsapp:+5511999999999 -> +5511999999999)
-    const phoneNumber = fromNumber.replace(/^whatsapp:/, '').trim();
+    const phoneNumber = fixPhoneNumber(fromNumber.replace(/^whatsapp:/, '').trim());
 
     // Remove + prefix and any non-numeric characters for database lookup
     // The userComm service expects phone numbers as strings or numbers
@@ -83,7 +82,7 @@ const processIncomingMessage = async (messageData) => {
 const sendWhatsAppResponse = async (phoneNumber, message) => {
   try {
     // sendWhatsAppMessage already adds whatsapp: prefix, so just pass the clean number
-    await sendWhatsAppMessage(phoneNumber, message);
+    await sendWhatsAppMessage(fixPhoneNumber(phoneNumber), message);
     logger.info('WhatsApp response sent', { phoneNumber });
   } catch (error) {
     logger.error('Error sending WhatsApp response:', error);
