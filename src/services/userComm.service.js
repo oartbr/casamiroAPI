@@ -2,7 +2,7 @@ const httpStatus = require('http-status');
 const { User, Membership, List } = require('../models');
 const ApiError = require('../utils/ApiError');
 const listService = require('./list.service');
-
+const { fixPhoneNumber } = require('../utils/phoneNumbers');
 /**
  * Get user context by phone number
  * Returns groups and lists with IDs, names, and default indicators
@@ -11,17 +11,9 @@ const listService = require('./list.service');
  */
 const getUserContext = async (phoneNumber) => {
   // Convert phoneNumber to number for proper matching since User model stores it as Number
-  const fixedPhoneNumber =
-    phoneNumber.length === 12 && phoneNumber.slice(0, 2) === '55'
-      ? `${phoneNumber.slice(0, 4)}9${phoneNumber.slice(4)}`
-      : phoneNumber;
-
-  const phoneNumberAsNumber =
-    typeof fixedPhoneNumber === 'string' ? parseInt(fixedPhoneNumber.replace(/\D/g, ''), 10) : fixedPhoneNumber;
-
+  const phoneNumberAsNumber = fixPhoneNumber(phoneNumber);
   // Find user by phone number
   const user = await User.getUserByPhoneNumber(phoneNumberAsNumber);
-
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Phone number is not linked to any user');
   }
@@ -83,8 +75,8 @@ const getUserContext = async (phoneNumber) => {
  * @returns {Promise<List>} Updated list
  */
 const addItemsToList = async (listId, phoneNumber, items) => {
-  // Get user by phone number
-  const phoneNumberAsNumber = typeof phoneNumber === 'string' ? parseInt(phoneNumber.replace(/\D/g, ''), 10) : phoneNumber;
+  // Convert phoneNumber to number for proper matching since User model stores it as Number
+  const phoneNumberAsNumber = fixPhoneNumber(phoneNumber);
   const user = await User.getUserByPhoneNumber(phoneNumberAsNumber);
 
   if (!user) {
@@ -145,8 +137,8 @@ const addItemsToList = async (listId, phoneNumber, items) => {
  * @returns {Promise<List>} Updated list
  */
 const removeItemsFromList = async (listId, phoneNumber, itemTexts) => {
-  // Get user by phone number
-  const phoneNumberAsNumber = typeof phoneNumber === 'string' ? parseInt(phoneNumber.replace(/\D/g, ''), 10) : phoneNumber;
+  // Convert phoneNumber to number for proper matching since User model stores it as Number
+  const phoneNumberAsNumber = fixPhoneNumber(phoneNumber);
   const user = await User.getUserByPhoneNumber(phoneNumberAsNumber);
 
   if (!user) {
@@ -206,8 +198,8 @@ const removeItemsFromList = async (listId, phoneNumber, itemTexts) => {
  * @returns {Promise<List>} Complete list with items
  */
 const getListById = async (listId, phoneNumber) => {
-  // Get user by phone number
-  const phoneNumberAsNumber = typeof phoneNumber === 'string' ? parseInt(phoneNumber.replace(/\D/g, ''), 10) : phoneNumber;
+  // Convert phoneNumber to number for proper matching since User model stores it as Number
+  const phoneNumberAsNumber = fixPhoneNumber(phoneNumber);
   const user = await User.getUserByPhoneNumber(phoneNumberAsNumber);
 
   if (!user) {
