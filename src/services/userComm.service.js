@@ -55,6 +55,17 @@ const getUserContext = async (phoneNumber) => {
     isDefault: list.isDefault,
   }));
 
+  console.log({
+    user: {
+      id: user._id.toString(),
+      firstName: user.firstName,
+      lastName: user.lastName,
+      phoneNumber: user.phoneNumber,
+    },
+    groups,
+    lists: formattedLists,
+  });
+
   return {
     user: {
       id: user._id.toString(),
@@ -78,7 +89,7 @@ const addItemsToList = async (listId, phoneNumber, items) => {
   // Convert phoneNumber to number for proper matching since User model stores it as Number
   const phoneNumberAsNumber = fixPhoneNumber(phoneNumber);
   const user = await User.getUserByPhoneNumber(phoneNumberAsNumber);
-
+  console.log({ phoneNumber });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Phone number is not linked to any user');
   }
