@@ -17,6 +17,7 @@ const hashiconRoute = require('./hashicon.route');
 const canonicalProductRoute = require('./canonicalProduct.route');
 const referralRoute = require('./referral.route');
 const userCommRoute = require('./userComm.route');
+const whatsappWebhookRoute = require('./whatsappWebhook.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -90,6 +91,10 @@ const defaultRoutes = [
   {
     path: '/userComm',
     route: userCommRoute,
+  },
+  {
+    path: '/whatsapp',
+    route: whatsappWebhookRoute,
   },
 ];
 
