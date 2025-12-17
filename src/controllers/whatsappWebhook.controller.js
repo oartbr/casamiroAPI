@@ -14,12 +14,16 @@ const handleWebhook = catchAsync(async (req, res) => {
     // Twilio sends data as form-encoded, so it's in req.body
     const messageData = req.body;
 
+    const numMedia = parseInt(messageData.NumMedia || '0', 10);
+
     logger.info('Received WhatsApp webhook', {
       from: messageData.From,
       body: messageData.Body ? messageData.Body.substring(0, 100) : 'No body',
+      numMedia,
+      hasMedia: numMedia > 0,
     });
 
-    // Process the message
+    // Process the message (service will handle media transcription if needed)
     const result = await whatsappWebhookService.processIncomingMessage(messageData);
 
     // Send response back to user
@@ -46,6 +50,17 @@ const handleWebhook = catchAsync(async (req, res) => {
   }
 });
 
+const handleCallback = catchAsync(async (req, res) => {
+  try {
+    // TODO: Implement WhatsApp callback handler
+  } catch (error) {
+    logger.error('Error in WhatsApp callback handler:', error);
+    // Return 200 to Twilio even on error to prevent retries
+    res.status(httpStatus.OK).send('OK');
+  }
+});
+
 module.exports = {
   handleWebhook,
+  handleCallback,
 };

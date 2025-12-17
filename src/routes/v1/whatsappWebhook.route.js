@@ -14,7 +14,11 @@ router.post(
   whatsappWebhookController.handleWebhook
 );
 
+router.post(
+  '/callback',
+  express.urlencoded({ extended: true }), // Parse Twilio form-encoded data
+  validate(whatsappWebhookValidation.handleCallback),
+  whatsappWebhookController.handleCallback
+);
+
 module.exports = router;
-
-
-

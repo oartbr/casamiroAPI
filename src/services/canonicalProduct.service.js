@@ -1,8 +1,8 @@
-const { CanonicalProduct } = require('../models');
-const ApiError = require('../utils/ApiError');
 const httpStatus = require('http-status');
 const path = require('path');
 const fs = require('fs');
+const ApiError = require('../utils/ApiError');
+const { CanonicalProduct } = require('../models');
 
 // Utility function to normalize text (remove accents, lowercase)
 const normalizeText = (text) => {
@@ -34,16 +34,14 @@ const loadCategoryTaxonomy = () => {
 const mapCategoryToPortuguese = (categoryKey, subcategoryKey) => {
   const taxonomy = loadCategoryTaxonomy();
   const category = taxonomy.categories[categoryKey];
-  
+
   if (!category) {
     return { category: null, subcategory: null };
   }
-  
+
   const categoryLabel = category.label || null;
-  const subcategoryLabel = subcategoryKey && category.subcategories 
-    ? category.subcategories[subcategoryKey] || null 
-    : null;
-  
+  const subcategoryLabel = subcategoryKey && category.subcategories ? category.subcategories[subcategoryKey] || null : null;
+
   return {
     category: categoryLabel,
     subcategory: subcategoryLabel,
@@ -186,7 +184,7 @@ Defina confidence entre 0 e 1 conforme seu nível de certeza.`,
     // The agent returns category_key (e.g., "dairy") and subcategory as a key (e.g., "milk_uht")
     // NOTE: The agent might return subcategory as Portuguese text OR as a key - we need to handle both
     const categoryMapping = mapCategoryToPortuguese(result.category_key, result.subcategory);
-    
+
     // If subcategory mapping failed but agent returned a subcategory value, check if it's already Portuguese
     // or if we need to try reverse lookup
     let finalSubcategory = categoryMapping.subcategory;
@@ -198,27 +196,27 @@ Defina confidence entre 0 e 1 conforme seu nível de certeza.`,
       if (category && category.subcategories) {
         // Normalize both for comparison (case-insensitive, remove accents)
         const normalizedAgentSubcategory = normalizeText(result.subcategory);
-        
+
         // Search for the subcategory value in the Portuguese labels (case-insensitive)
         // Also check if the agent subcategory is contained in the taxonomy label or vice versa
-        const foundKey = Object.keys(category.subcategories).find(
-          key => {
-            const taxonomyLabel = category.subcategories[key];
-            const normalizedTaxonomyLabel = normalizeText(taxonomyLabel);
-            // Exact match after normalization
-            if (normalizedTaxonomyLabel === normalizedAgentSubcategory) return true;
-            // Check if one contains the other (handles singular/plural variations)
-            if (normalizedTaxonomyLabel.includes(normalizedAgentSubcategory) || 
-                normalizedAgentSubcategory.includes(normalizedTaxonomyLabel)) {
-              // Make sure it's a meaningful match (at least 4 characters to avoid false matches)
-              if (normalizedAgentSubcategory.length >= 4 || normalizedTaxonomyLabel.length >= 4) {
-                return true;
-              }
+        const foundKey = Object.keys(category.subcategories).find((key) => {
+          const taxonomyLabel = category.subcategories[key];
+          const normalizedTaxonomyLabel = normalizeText(taxonomyLabel);
+          // Exact match after normalization
+          if (normalizedTaxonomyLabel === normalizedAgentSubcategory) return true;
+          // Check if one contains the other (handles singular/plural variations)
+          if (
+            normalizedTaxonomyLabel.includes(normalizedAgentSubcategory) ||
+            normalizedAgentSubcategory.includes(normalizedTaxonomyLabel)
+          ) {
+            // Make sure it's a meaningful match (at least 4 characters to avoid false matches)
+            if (normalizedAgentSubcategory.length >= 4 || normalizedTaxonomyLabel.length >= 4) {
+              return true;
             }
-            return false;
           }
-        );
-        
+          return false;
+        });
+
         if (foundKey) {
           // Found it - use the Portuguese label from taxonomy (properly formatted)
           finalSubcategory = category.subcategories[foundKey];
@@ -232,7 +230,7 @@ Defina confidence entre 0 e 1 conforme seu nível de certeza.`,
         finalSubcategory = result.subcategory.charAt(0).toUpperCase() + result.subcategory.slice(1).toLowerCase();
       }
     }
-    
+
     // Prepare the classification result
     const classification = {
       canonical_name: result.canonical_name || productData.product || productData.name,
@@ -244,7 +242,7 @@ Defina confidence entre 0 e 1 conforme seu nível de certeza.`,
       category_key: result.category_key || null,
       package_size: result.package_size || null,
       unit: result.unit || null,
-      quantity: result.quantity !== undefined ? result.quantity : (productData.quantity || null),
+      quantity: result.quantity !== undefined ? result.quantity : productData.quantity || null,
       package_description: result.package_description || null,
       gtin: result.gtin || productData.code || null,
       ncm: result.ncm || null,
@@ -324,13 +322,10 @@ const createOrUpdateFromNotaItem = async (productData, options = {}) => {
   // 1. Product doesn't exist yet (new product)
   // 2. Existing product has low confidence (< 0.7) or was classified by fallback
   // 3. OpenAI is explicitly enabled
-  const needsOpenAIAnalysis = useOpenAI && (
-    !existingProduct || 
-    (existingProduct && (
-      existingProduct.confidence < 0.7 || 
-      existingProduct.source === 'system-fallback'
-    ))
-  );
+  const needsOpenAIAnalysis =
+    useOpenAI &&
+    (!existingProduct ||
+      (existingProduct && (existingProduct.confidence < 0.7 || existingProduct.source === 'system-fallback')));
 
   // Get classification from OpenAI if needed
   let classification = {};
@@ -397,9 +392,7 @@ const createOrUpdateFromNotaItem = async (productData, options = {}) => {
     synonymsStats.push({ synonym: rawProductName, count: 1 });
   } else {
     // Update count for existing synonym
-    const statIndex = synonymsStats.findIndex(
-      (stat) => normalizeText(stat.synonym) === normalizedProductName
-    );
+    const statIndex = synonymsStats.findIndex((stat) => normalizeText(stat.synonym) === normalizedProductName);
     if (statIndex >= 0) {
       synonymsStats[statIndex].count += 1;
     }
@@ -411,7 +404,8 @@ const createOrUpdateFromNotaItem = async (productData, options = {}) => {
   if (existingProduct) {
     // Update existing product
     existingProduct.canonical_name = classification.canonical_name || existingProduct.canonical_name;
-    existingProduct.canonical_name_normalized = classification.canonical_name_normalized || existingProduct.canonical_name_normalized;
+    existingProduct.canonical_name_normalized =
+      classification.canonical_name_normalized || existingProduct.canonical_name_normalized;
     existingProduct.brand = classification.brand || existingProduct.brand;
     existingProduct.brand_normalized = classification.brand_normalized || existingProduct.brand_normalized;
     existingProduct.category = classification.category || existingProduct.category;
@@ -424,8 +418,10 @@ const createOrUpdateFromNotaItem = async (productData, options = {}) => {
     existingProduct.gtin = classification.gtin || existingProduct.gtin;
     existingProduct.ncm = classification.ncm || existingProduct.ncm;
     existingProduct.origin = classification.origin || existingProduct.origin;
-    existingProduct.is_alcoholic = classification.is_alcoholic !== undefined ? classification.is_alcoholic : existingProduct.is_alcoholic;
-    existingProduct.is_fresh_produce = classification.is_fresh_produce !== undefined ? classification.is_fresh_produce : existingProduct.is_fresh_produce;
+    existingProduct.is_alcoholic =
+      classification.is_alcoholic !== undefined ? classification.is_alcoholic : existingProduct.is_alcoholic;
+    existingProduct.is_fresh_produce =
+      classification.is_fresh_produce !== undefined ? classification.is_fresh_produce : existingProduct.is_fresh_produce;
     existingProduct.is_bulk = classification.is_bulk !== undefined ? classification.is_bulk : existingProduct.is_bulk;
     existingProduct.confidence = Math.max(classification.confidence || 0, existingProduct.confidence);
     existingProduct.source = classification.source || existingProduct.source;
@@ -433,9 +429,8 @@ const createOrUpdateFromNotaItem = async (productData, options = {}) => {
     existingProduct.synonyms_normalized = synonymsNormalized;
     existingProduct.synonyms_stats = synonymsStats;
     existingProduct.updated_by = userId;
-    
+
     await existingProduct.save();
-    return existingProduct;
   } else {
     // Create new product
     const newProduct = await CanonicalProduct.create({
@@ -450,6 +445,7 @@ const createOrUpdateFromNotaItem = async (productData, options = {}) => {
     });
     return newProduct;
   }
+  return existingProduct;
 };
 
 /**
@@ -465,7 +461,7 @@ const createCanonicalProduct = async (productBody) => {
   if (productBody.brand) {
     productBody.brand_normalized = normalizeText(productBody.brand);
   }
-  
+
   return CanonicalProduct.create(productBody);
 };
 
@@ -480,8 +476,9 @@ const createCanonicalProduct = async (productBody) => {
  */
 const queryCanonicalProducts = async (filter, options) => {
   const parsedFilter = filter.filters ? JSON.parse(filter.filters) : {};
-  const parsedSort = 'sort' in options && options.sort ? JSON.parse(options.sort) : '[{"orderBy": "createdAt", "order": "desc"}]';
-  
+  const parsedSort =
+    'sort' in options && options.sort ? JSON.parse(options.sort) : '[{"orderBy": "createdAt", "order": "desc"}]';
+
   const adjustedOptions = {
     limit: parseInt(options.limit, 10) || 10,
     page: parseInt(options.page, 10) || 1,
@@ -490,7 +487,7 @@ const queryCanonicalProducts = async (filter, options) => {
         ? `${parsedSort[0].orderBy}:${parsedSort[0].order || 'desc'}`
         : 'createdAt:desc',
   };
-  
+
   const products = await CanonicalProduct.paginate(parsedFilter, adjustedOptions);
   products.hasNextPage = products.page < products.totalPages;
   return products;
@@ -577,4 +574,3 @@ module.exports = {
   searchCanonicalProducts,
   classifyProductWithOpenAI,
 };
-

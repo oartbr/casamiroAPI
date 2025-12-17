@@ -72,22 +72,25 @@ const addItemsToList = tool({
         cleanPhoneNumber = cleanPhoneNumber.replace(/^\+/, '').replace(/\D/g, '');
       }
 
-      const list = await userCommService.addItemsToList(input.list_id, cleanPhoneNumber, input.items);
+      const result = await userCommService.addItemsToList(input.list_id, cleanPhoneNumber, input.items);
 
       logger.info('addItemsToList tool succeeded', {
-        listId: list._id.toString(),
-        listName: list.name,
-        itemsAdded: input.items.length,
-        totalItemsInList: list.items.length,
+        listId: result.list._id.toString(),
+        listName: result.list.name,
+        itemsAdded: result.itemsAdded,
+        itemsSkipped: result.itemsSkipped,
+        totalItemsInList: result.list.items.length,
       });
 
       return {
         success: true,
-        message: `Added ${input.items.length} item(s) to the list`,
+        message: result.message || `Added ${result.itemsAdded} item(s) to the list`,
         data: {
-          listId: list._id.toString(),
-          listName: list.name,
-          itemsAdded: input.items.length,
+          listId: result.list._id.toString(),
+          listName: result.list.name,
+          itemsAdded: result.itemsAdded,
+          itemsSkipped: result.itemsSkipped || 0,
+          duplicateItems: result.duplicateItems,
         },
       };
     } catch (error) {
