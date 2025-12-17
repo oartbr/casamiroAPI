@@ -55,17 +55,6 @@ const getUserContext = async (phoneNumber) => {
     isDefault: list.isDefault,
   }));
 
-  console.log({
-    user: {
-      id: user._id.toString(),
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: user.phoneNumber,
-    },
-    groups,
-    lists: formattedLists,
-  });
-
   return {
     user: {
       id: user._id.toString(),
@@ -89,7 +78,7 @@ const addItemsToList = async (listId, phoneNumber, items) => {
   // Convert phoneNumber to number for proper matching since User model stores it as Number
   const phoneNumberAsNumber = fixPhoneNumber(phoneNumber);
   const user = await User.getUserByPhoneNumber(phoneNumberAsNumber);
-  console.log({ phoneNumber });
+  // console.log({ phoneNumber });
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'Phone number is not linked to any user');
   }
@@ -116,17 +105,54 @@ const addItemsToList = async (listId, phoneNumber, items) => {
     throw new ApiError(httpStatus.BAD_REQUEST, 'Items array is required and must not be empty');
   }
 
-  // Get the next order number
-  const nextOrder = list.items.length > 0 ? Math.max(...list.items.map((item) => item.order || 0)) + 1 : 1;
+  // Get existing items (normalized for comparison - lowercase, trimmed)
+  const existingItems = list.items.map((item) => item.text.trim().toLowerCase());
 
-  // Add items to the list
+  // Separate items into new items and duplicates
+  const itemsToAdd = [];
+  const duplicateItems = [];
+
   items.forEach((itemText, index) => {
     if (typeof itemText !== 'string' || !itemText.trim()) {
       throw new ApiError(httpStatus.BAD_REQUEST, `Item at index ${index} must be a non-empty string`);
     }
 
+    const normalizedText = itemText.trim().toLowerCase();
+
+    // Check if item already exists (case-insensitive)
+    if (existingItems.includes(normalizedText)) {
+      duplicateItems.push(itemText.trim());
+    } else {
+      itemsToAdd.push({
+        text: itemText.trim(),
+        normalizedText,
+      });
+      // Add to existing items to prevent duplicates within the same batch
+      existingItems.push(normalizedText);
+    }
+  });
+
+  // If no new items to add, return early with duplicate information
+  if (itemsToAdd.length === 0) {
+    return {
+      list,
+      itemsAdded: 0,
+      itemsSkipped: duplicateItems.length,
+      duplicateItems,
+      message:
+        duplicateItems.length === 1
+          ? `"${duplicateItems[0]}" is already in the list`
+          : `All items are already in the list: ${duplicateItems.join(', ')}`,
+    };
+  }
+
+  // Get the next order number
+  const nextOrder = list.items.length > 0 ? Math.max(...list.items.map((item) => item.order || 0)) + 1 : 1;
+
+  // Add only new items to the list
+  itemsToAdd.forEach((item, index) => {
     const newItem = {
-      text: itemText.trim(),
+      text: item.text,
       addedBy: user.firstName,
       order: nextOrder + index,
       isCompleted: false,
@@ -137,7 +163,19 @@ const addItemsToList = async (listId, phoneNumber, items) => {
 
   await list.save();
 
-  return list;
+  // Return list with information about what was added and what was skipped
+  return {
+    list,
+    itemsAdded: itemsToAdd.length,
+    itemsSkipped: duplicateItems.length,
+    duplicateItems: duplicateItems.length > 0 ? duplicateItems : undefined,
+    message:
+      itemsToAdd.length > 0 && duplicateItems.length > 0
+        ? `Added ${itemsToAdd.length} item(s). ${duplicateItems.length} item(s) already in list: ${duplicateItems.join(
+            ', '
+          )}`
+        : `Added ${itemsToAdd.length} item(s) to the list`,
+  };
 };
 
 /**

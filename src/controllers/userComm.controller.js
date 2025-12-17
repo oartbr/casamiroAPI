@@ -61,15 +61,25 @@ const addItemsToList = catchAsync(async (req, res) => {
     });
   }
 
-  const list = await userCommService.addItemsToList(listId, phoneNumber, items);
+  const result = await userCommService.addItemsToList(listId, phoneNumber, items);
+
+  // Handle the new return format which includes duplicate information
+  const responseData = {
+    listId: result.list._id.toString(),
+    listName: result.list.name,
+    itemsAdded: result.itemsAdded,
+    itemsSkipped: result.itemsSkipped || 0,
+  };
+
+  // Include duplicate items in response if any
+  if (result.duplicateItems && result.duplicateItems.length > 0) {
+    responseData.duplicateItems = result.duplicateItems;
+  }
+
   res.status(httpStatus.OK).send({
     success: true,
-    message: `Added ${items.length} item(s) to the list`,
-    data: {
-      listId: list._id.toString(),
-      listName: list.name,
-      itemsAdded: items.length,
-    },
+    message: result.message || `Added ${result.itemsAdded} item(s) to the list`,
+    data: responseData,
   });
 });
 
@@ -139,5 +149,3 @@ module.exports = {
   removeItemsFromList,
   getListById,
 };
-
-
