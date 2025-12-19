@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 const httpStatus = require('http-status');
 const { List, Membership, User } = require('../models');
 const ApiError = require('../utils/ApiError');
@@ -21,10 +22,7 @@ const createList = async (listBody) => {
 
   // If this is set as default, ensure no other default exists
   if (listBody.isDefault) {
-    await List.updateMany(
-      { groupId: listBody.groupId, isDefault: true },
-      { isDefault: false }
-    );
+    await List.updateMany({ groupId: listBody.groupId, isDefault: true }, { isDefault: false });
   }
 
   return List.create(listBody);
@@ -52,7 +50,7 @@ const queryLists = async (filter, options) => {
  */
 const getListById = async (id, userId = null) => {
   const list = await List.findById(id).populate('groupId', 'name iconUrl').populate('createdBy', 'firstName lastName');
-  
+
   if (!list) {
     throw new ApiError(httpStatus.NOT_FOUND, 'List not found');
   }
@@ -115,8 +113,10 @@ const getDefaultListByGroup = async (groupId, userId) => {
     throw new ApiError(httpStatus.FORBIDDEN, 'You are not a member of this group');
   }
 
-  let list = await List.findOne({ groupId, isDefault: true }).populate('groupId', 'name iconUrl').populate('createdBy', 'firstName lastName');
-  
+  let list = await List.findOne({ groupId, isDefault: true })
+    .populate('groupId', 'name iconUrl')
+    .populate('createdBy', 'firstName lastName');
+
   // If no default list exists, create one
   if (!list) {
     list = await createList({
@@ -140,7 +140,7 @@ const getDefaultListByGroup = async (groupId, userId) => {
  */
 const updateListById = async (listId, updateBody, userId) => {
   const list = await getListById(listId, userId);
-  
+
   // Check if user is the creator or has admin role
   const membership = await Membership.findOne({
     user_id: userId,
@@ -154,10 +154,7 @@ const updateListById = async (listId, updateBody, userId) => {
 
   // If setting as default, ensure no other default exists
   if (updateBody.isDefault) {
-    await List.updateMany(
-      { groupId: list.groupId, isDefault: true, _id: { $ne: listId } },
-      { isDefault: false }
-    );
+    await List.updateMany({ groupId: list.groupId, isDefault: true, _id: { $ne: listId } }, { isDefault: false });
   }
 
   Object.assign(list, updateBody);
@@ -173,7 +170,7 @@ const updateListById = async (listId, updateBody, userId) => {
  */
 const deleteListById = async (listId, userId) => {
   const list = await getListById(listId, userId);
-  
+
   // Check if user is the creator or has admin role
   const membership = await Membership.findOne({
     user_id: userId,
@@ -203,15 +200,15 @@ const deleteListById = async (listId, userId) => {
 const createListItem = async (itemBody, userId) => {
   // Get the list and validate membership
   const list = await getListById(itemBody.listId, userId);
-  
+
   // Get user's firstName
   const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
   }
-  
+
   // Get the next order number
-  const nextOrder = list.items.length > 0 ? Math.max(...list.items.map(item => item.order || 0)) + 1 : 1;
+  const nextOrder = list.items.length > 0 ? Math.max(...list.items.map((item) => item.order || 0)) + 1 : 1;
 
   // Create the new item
   const newItem = {
@@ -224,7 +221,7 @@ const createListItem = async (itemBody, userId) => {
   // Add the item to the list
   list.items.push(newItem);
   await list.save();
-  
+
   return list;
 };
 
@@ -238,29 +235,27 @@ const createListItem = async (itemBody, userId) => {
 const getListItems = async (listId, userId, options = {}) => {
   // Get the list with items and validate access
   const list = await getListById(listId, userId);
-  
+
   // Populate user details for completedBy only (addedBy is now a string)
-  await list.populate([
-    { path: 'items.completedBy', select: 'firstName lastName' }
-  ]);
-  
+  await list.populate([{ path: 'items.completedBy', select: 'firstName lastName' }]);
+
   // Sort items by order
   const sortedItems = list.items.sort((a, b) => (a.order || 0) - (b.order || 0));
-  
+
   // Apply filters if needed
   let filteredItems = sortedItems;
   if (options.isCompleted !== undefined) {
-    filteredItems = sortedItems.filter(item => item.isCompleted === options.isCompleted);
+    filteredItems = sortedItems.filter((item) => item.isCompleted === options.isCompleted);
   }
-  
+
   // Apply pagination
-  const page = parseInt(options.page) || 1;
-  const limit = parseInt(options.limit) || 50;
+  const page = parseInt(options.page, 10) || 1;
+  const limit = parseInt(options.limit, 10) || 50;
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit;
-  
+
   const paginatedItems = filteredItems.slice(startIndex, endIndex);
-  
+
   return {
     results: paginatedItems,
     page,
@@ -280,7 +275,7 @@ const getListItems = async (listId, userId, options = {}) => {
 const updateListItemById = async (itemId, updateBody, userId) => {
   // Find the list that contains this item
   const list = await List.findOne({ 'items._id': itemId });
-  
+
   if (!list) {
     throw new ApiError(httpStatus.NOT_FOUND, 'List item not found');
   }
@@ -294,20 +289,14 @@ const updateListItemById = async (itemId, updateBody, userId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'List item not found');
   }
 
-  // Check if user can update this item
+  // Check if user can update this item - any group member can update any item
   const membership = await Membership.findOne({
     user_id: userId,
     group_id: list.groupId,
     status: 'active',
   });
 
-  // Get user's firstName to compare with addedBy
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-
-  if (!membership || (item.addedBy !== user.firstName && membership.role !== 'admin')) {
+  if (!membership) {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to update this item');
   }
 
@@ -322,10 +311,8 @@ const updateListItemById = async (itemId, updateBody, userId) => {
   await list.save();
 
   // Populate user details for completedBy only (addedBy is now a string)
-  await list.populate([
-    { path: 'items.completedBy', select: 'firstName lastName' }
-  ]);
-  
+  await list.populate([{ path: 'items.completedBy', select: 'firstName lastName' }]);
+
   return list;
 };
 
@@ -338,7 +325,7 @@ const updateListItemById = async (itemId, updateBody, userId) => {
 const deleteListItemById = async (itemId, userId) => {
   // Find the list that contains this item
   const list = await List.findOne({ 'items._id': itemId });
-  
+
   if (!list) {
     throw new ApiError(httpStatus.NOT_FOUND, 'List item not found');
   }
@@ -352,20 +339,14 @@ const deleteListItemById = async (itemId, userId) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'List item not found');
   }
 
-  // Check if user can delete this item
+  // Check if user can delete this item - any group member can delete any item
   const membership = await Membership.findOne({
     user_id: userId,
     group_id: list.groupId,
     status: 'active',
   });
 
-  // Get user's firstName to compare with addedBy
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
-  }
-
-  if (!membership || (item.addedBy !== user.firstName && membership.role !== 'admin')) {
+  if (!membership) {
     throw new ApiError(httpStatus.FORBIDDEN, 'You do not have permission to delete this item');
   }
 
@@ -387,5 +368,3 @@ module.exports = {
   updateListItemById,
   deleteListItemById,
 };
-
-
