@@ -15,3 +15,4 @@ module.exports.groupService = require('./group.service');
 module.exports.canonicalProductService = require('./canonicalProduct.service');
 module.exports.userCommService = require('./userComm.service');
 module.exports.whatsappWebhookService = require('./whatsappWebhook.service');
+module.exports.onboardingService = require('./onboarding.service');

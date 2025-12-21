@@ -18,6 +18,7 @@ const canonicalProductRoute = require('./canonicalProduct.route');
 const referralRoute = require('./referral.route');
 const userCommRoute = require('./userComm.route');
 const whatsappWebhookRoute = require('./whatsappWebhook.route');
+const onboardingRoute = require('./onboarding.route');
 const config = require('../../config/config');
 const logger = require('../../config/logger');
 
@@ -95,6 +96,10 @@ const defaultRoutes = [
   {
     path: '/whatsapp',
     route: whatsappWebhookRoute,
+  },
+  {
+    path: '/onboarding',
+    route: onboardingRoute,
   },
 ];
 

@@ -114,6 +114,23 @@ const userSchema = mongoose.Schema(
       ref: 'User',
       required: false,
     },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    onboardingContext: {
+      type: String,
+      enum: ['casa', 'casal', 'republica', 'escritorio', 'condominio'],
+      required: false,
+    },
+    onboardingStartedAt: {
+      type: Date,
+      required: false,
+    },
+    onboardingCompletedAt: {
+      type: Date,
+      required: false,
+    },
   },
   {
     timestamps: true,
