@@ -1,5 +1,12 @@
+/* eslint-disable import/no-extraneous-dependencies */
 const { userCommService } = require('./index');
 const logger = require('../config/logger');
+
+// Model configuration with environment variable support
+// Trim model names to remove any trailing comments or whitespace from .env files
+const mainModel = (process.env.OPENAI_PRIMARY_MODEL || 'gpt-4o-mini').trim().split(/\s+#/)[0].trim();
+const fallbackModel = (process.env.OPENAI_FALLBACK_MODEL || 'gpt-4o').trim().split(/\s+#/)[0].trim();
+const useFallback = process.env.OPENAI_USE_FALLBACK !== 'false'; // Default to true
 
 // Dynamically load OpenAI packages with error handling
 let agents;
@@ -188,9 +195,48 @@ async function runAndApplyGuardrails(inputText) {
   };
 }
 
+/**
+ * Run an agent with fallback support
+ * Tries the primary agent first, falls back to fallback agent on error or quality issues
+ * @param {Runner} runner - The agent runner instance
+ * @param {Agent} primaryAgent - Primary (cost-effective) agent
+ * @param {Agent} fallbackAgent - Fallback (more powerful) agent
+ * @param {Array} conversationHistory - Conversation history
+ * @param {Object} context - Context for the agent
+ * @param {Function} qualityCheck - Optional function to check result quality
+ * @returns {Promise<Object>} Agent result
+ */
+async function runAgentWithFallback(runner, primaryAgent, fallbackAgent, conversationHistory, context, qualityCheck = null) {
+  if (!useFallback || !fallbackAgent) {
+    // If fallback is disabled or no fallback agent provided, just use primary
+    return runner.run(primaryAgent, [...conversationHistory], { context });
+  }
+
+  try {
+    const result = await runner.run(primaryAgent, [...conversationHistory], { context });
+
+    // If quality check is provided, validate the result
+    if (qualityCheck && !qualityCheck(result)) {
+      logger.warn('Primary agent result did not meet quality criteria, falling back', {
+        agentName: primaryAgent.name,
+      });
+      return runner.run(fallbackAgent, [...conversationHistory], { context });
+    }
+
+    return result;
+  } catch (error) {
+    logger.warn('Primary agent failed, falling back to more powerful model', {
+      agentName: primaryAgent.name,
+      error: error.message,
+    });
+    // Fallback to more powerful model on error
+    return runner.run(fallbackAgent, [...conversationHistory], { context });
+  }
+}
+
 // Schema definitions
 const ClassificationAgentSchema = z.object({
-  classification: z.enum(['add_to_list', 'remove_from_list', 'show_list']),
+  classifications: z.array(z.enum(['add_to_list', 'remove_from_list', 'show_list'])).min(1),
 });
 
 const IsphonenumberauserSchema = z.object({
@@ -226,17 +272,24 @@ const IsphonenumberauserSchema = z.object({
 // Agent definitions
 const classificationAgentInstructions = (runContext) => {
   const { workflowInputAsText } = runContext.context;
-  return `Classify the user's intent, ${workflowInputAsText}, into one of the following categories: "add_to_list", "remove_from_list", or "show_list".  
+  return `Analyze the user's message "${workflowInputAsText}" and identify ALL intents present. Return an array of classifications.
 
-1. Any request to add an item to a list should route to add_to_list.
-2. Any request that indicates that the user wants to remove a certain item from the list, should be listed as remove_from_list.
-3. If the user wants to see the list, it should be set to show_list.`;
+A user's message may contain multiple requests. For example:
+- "include milk and remove bread" contains BOTH "add_to_list" (for milk) AND "remove_from_list" (for bread)
+- "add eggs and show my list" contains BOTH "add_to_list" (for eggs) AND "show_list"
+
+Classification categories:
+1. "add_to_list" - Any request to add an item to a list (e.g., "add", "include", "put in")
+2. "remove_from_list" - Any request to remove an item from a list (e.g., "remove", "delete", "take out")
+3. "show_list" - Any request to view/see/display the list
+
+Return an array with all applicable classifications. If the message contains multiple different actions, include all of them in the array.`;
 };
 
 const classificationAgent = new Agent({
   name: 'Classification Agent',
   instructions: classificationAgentInstructions,
-  model: 'gpt-4o',
+  model: mainModel,
   outputType: ClassificationAgentSchema,
   modelSettings: {
     temperature: 1,
@@ -256,7 +309,7 @@ Return the object received from the app or false.`;
 const isphonenumberauser = new Agent({
   name: 'isPhoneNumberAUser',
   instructions: isphonenumberauserInstructions,
-  model: 'gpt-4o',
+  model: mainModel,
   tools: [getUserInfoByPhone],
   outputType: IsphonenumberauserSchema,
   modelSettings: {
@@ -314,7 +367,7 @@ You should:
 const additem2list = new Agent({
   name: 'addItem2List',
   instructions: additem2listInstructions,
-  model: 'gpt-4o',
+  model: mainModel,
   tools: [getUserInfoByPhone, addItemsToList],
   modelSettings: {
     temperature: 0.7,
@@ -323,6 +376,22 @@ const additem2list = new Agent({
     store: true,
   },
 });
+
+// Fallback agent for adding items (more powerful model)
+const additem2listFallback = useFallback
+  ? new Agent({
+      name: 'addItem2ListFallback',
+      instructions: additem2listInstructions,
+      model: fallbackModel,
+      tools: [getUserInfoByPhone, addItemsToList],
+      modelSettings: {
+        temperature: 0.7,
+        topP: 1,
+        maxTokens: 2048,
+        store: true,
+      },
+    })
+  : null;
 
 // Agent for removing items from list
 const removeItemAgent = new Agent({
@@ -333,7 +402,7 @@ When a user wants to remove items, you should:
 2. Extract the items they want to remove
 3. Use the removeItemsFromList tool with the list_id, phone_number, and items array
 4. Respond with a friendly confirmation message`,
-  model: 'gpt-4o',
+  model: mainModel,
   tools: [getUserInfoByPhone, removeItemsFromList],
   modelSettings: {
     temperature: 1,
@@ -342,6 +411,27 @@ When a user wants to remove items, you should:
     store: true,
   },
 });
+
+// Fallback agent for removing items (more powerful model)
+const removeItemAgentFallback = useFallback
+  ? new Agent({
+      name: 'removeItemAgentFallback',
+      instructions: `You are an assistant that helps users remove items from their shopping lists.
+When a user wants to remove items, you should:
+1. Identify which list they want to remove from (use default list if not specified)
+2. Extract the items they want to remove
+3. Use the removeItemsFromList tool with the list_id, phone_number, and items array
+4. Respond with a friendly confirmation message`,
+      model: fallbackModel,
+      tools: [getUserInfoByPhone, removeItemsFromList],
+      modelSettings: {
+        temperature: 1,
+        topP: 1,
+        maxTokens: 2048,
+        store: true,
+      },
+    })
+  : null;
 
 // Agent for showing list
 const showListAgent = new Agent({
@@ -352,7 +442,7 @@ When a user wants to see a list, you should:
 2. Use the getListById tool with the list_id and phone_number
 3. Format the list items in a readable way
 4. Respond with a friendly message showing the list`,
-  model: 'gpt-4o',
+  model: mainModel,
   tools: [getUserInfoByPhone, getListById],
   modelSettings: {
     temperature: 1,
@@ -361,6 +451,148 @@ When a user wants to see a list, you should:
     store: true,
   },
 });
+
+// Fallback agent for showing list (more powerful model)
+const showListAgentFallback = useFallback
+  ? new Agent({
+      name: 'showListAgentFallback',
+      instructions: `You are an assistant that helps users view their shopping lists.
+When a user wants to see a list, you should:
+1. Identify which list they want to see (use default list if not specified)
+2. Use the getListById tool with the list_id and phone_number
+3. Format the list items in a readable way
+4. Respond with a friendly message showing the list`,
+      model: fallbackModel,
+      tools: [getUserInfoByPhone, getListById],
+      modelSettings: {
+        temperature: 1,
+        topP: 1,
+        maxTokens: 2048,
+        store: true,
+      },
+    })
+  : null;
+
+/**
+ * Execute a single agent based on classification
+ * @param {Runner} runner - The agent runner instance
+ * @param {string} classification - The classification type
+ * @param {Array} conversationHistory - Current conversation history
+ * @param {Object} userContextData - User context data
+ * @param {string} phoneNumber - User's phone number
+ * @returns {Promise<Object>} Result with output_text and updated conversation history
+ */
+async function executeAgentByClassification(runner, classification, conversationHistory, userContextData, phoneNumber) {
+  const context = {
+    phoneNumber,
+    userContext: userContextData,
+  };
+
+  if (classification === 'add_to_list') {
+    logger.info('Running addItem2List agent', {
+      phoneNumber,
+      hasUserContext: !!userContextData,
+    });
+
+    const additem2listResultTemp = await runAgentWithFallback(
+      runner,
+      additem2list,
+      additem2listFallback,
+      [...conversationHistory],
+      { context },
+      (result) => {
+        const newItems = result.newItems || [];
+        const toolCalls = newItems.filter(
+          (item) =>
+            (item.rawItem && item.rawItem.role === 'tool') ||
+            (item.rawItem && item.rawItem.content && item.rawItem.content.some((c) => c.type === 'tool_call'))
+        );
+        return result.finalOutput || toolCalls.length > 0;
+      }
+    );
+
+    const newItems = additem2listResultTemp.newItems || [];
+    const toolCalls = newItems.filter(
+      (item) =>
+        (item.rawItem && item.rawItem.role === 'tool') ||
+        (item.rawItem && item.rawItem.content && item.rawItem.content.some((c) => c.type === 'tool_call'))
+    );
+
+    logger.info('addItem2List agent completed', {
+      hasFinalOutput: !!additem2listResultTemp.finalOutput,
+      toolCallsCount: toolCalls.length,
+    });
+
+    const updatedHistory = [...conversationHistory, ...additem2listResultTemp.newItems.map((item) => item.rawItem)];
+
+    if (!additem2listResultTemp.finalOutput) {
+      if (toolCalls && toolCalls.length > 0) {
+        return {
+          output_text: "I've added the items to your list!",
+          conversationHistory: updatedHistory,
+        };
+      }
+      throw new Error('Agent result is undefined and no tools were called');
+    }
+
+    return {
+      output_text: additem2listResultTemp.finalOutput || '',
+      conversationHistory: updatedHistory,
+    };
+  }
+  if (classification === 'remove_from_list') {
+    logger.info('Running removeItemAgent', {
+      phoneNumber,
+      hasUserContext: !!userContextData,
+    });
+
+    const removeItemResultTemp = await runAgentWithFallback(
+      runner,
+      removeItemAgent,
+      removeItemAgentFallback,
+      [...conversationHistory],
+      { context }
+    );
+
+    const updatedHistory = [...conversationHistory, ...removeItemResultTemp.newItems.map((item) => item.rawItem)];
+
+    if (!removeItemResultTemp.finalOutput) {
+      throw new Error('Agent result is undefined');
+    }
+
+    return {
+      output_text: removeItemResultTemp.finalOutput || '',
+      conversationHistory: updatedHistory,
+    };
+  }
+  if (classification === 'show_list') {
+    logger.info('Running showListAgent', {
+      phoneNumber,
+      hasUserContext: !!userContextData,
+    });
+
+    const showListResultTemp = await runAgentWithFallback(
+      runner,
+      showListAgent,
+      showListAgentFallback,
+      [...conversationHistory],
+      { context }
+    );
+
+    const updatedHistory = [...conversationHistory, ...showListResultTemp.newItems.map((item) => item.rawItem)];
+
+    if (!showListResultTemp.finalOutput) {
+      throw new Error('Agent result is undefined');
+    }
+
+    return {
+      output_text: showListResultTemp.finalOutput || '',
+      conversationHistory: updatedHistory,
+    };
+  }
+
+  throw new Error(`Unknown classification: ${classification}`);
+}
 
 /**
  * Main workflow function
@@ -428,7 +660,10 @@ const runWorkflow = async (workflow) => {
     };
 
     if (isphonenumberauserResult.output_parsed.success === true) {
-      // Classify the intent
+      // Get user context data
+      const userContextData = isphonenumberauserResult.output_parsed.data;
+
+      // Classify the intent using the classification agent
       const classificationAgentResultTemp = await runner.run(classificationAgent, [...conversationHistory], {
         context: {
           workflowInputAsText: workflow.input_as_text,
@@ -446,130 +681,65 @@ const runWorkflow = async (workflow) => {
         output_parsed: classificationAgentResultTemp.finalOutput,
       };
 
-      let agentResult;
+      // Get classifications array (handle both old single classification and new array format)
+      const classifications =
+        classificationAgentResult.output_parsed.classifications ||
+        (classificationAgentResult.output_parsed.classification
+          ? [classificationAgentResult.output_parsed.classification]
+          : []);
 
-      if (classificationAgentResult.output_parsed.classification === 'add_to_list') {
-        logger.info('Running addItem2List agent', {
-          phoneNumber: state.phone_number,
-          hasUserContext: !!isphonenumberauserResult.output_parsed.data,
+      if (classifications.length === 0) {
+        logger.warn('No classifications found in result', {
+          output_parsed: classificationAgentResult.output_parsed,
         });
-
-        // Get user context data
-        const userContextData = isphonenumberauserResult.output_parsed.data;
-
-        // Pass context through the context parameter instead of adding to conversation history
-        // This avoids format issues with the agents library
-        const additem2listResultTemp = await runner.run(additem2list, [...conversationHistory], {
-          context: {
-            phoneNumber: state.phone_number,
-            userContext: userContextData,
-          },
-        });
-
-        // Log tool calls for debugging
-        const newItems = additem2listResultTemp.newItems || [];
-        const toolCalls = newItems.filter(
-          (item) =>
-            (item.rawItem && item.rawItem.role === 'tool') ||
-            (item.rawItem && item.rawItem.content && item.rawItem.content.some((c) => c.type === 'tool_call'))
-        );
-
-        // Log detailed information about tool calls
-        const toolCallDetails = newItems
-          .map((item) => {
-            if (item.rawItem && item.rawItem.role === 'tool') {
-              return {
-                role: item.rawItem.role,
-                name: item.rawItem.name,
-                content: item.rawItem.content ? JSON.stringify(item.rawItem.content).substring(0, 200) : 'no content',
-              };
-            }
-            if (item.rawItem && item.rawItem.content) {
-              const toolCall = item.rawItem.content.find((c) => c.type === 'tool_call');
-              if (toolCall) {
-                return {
-                  role: 'assistant',
-                  toolCall: toolCall.name,
-                  arguments: toolCall.arguments ? JSON.stringify(toolCall.arguments).substring(0, 200) : 'no args',
-                };
-              }
-            }
-            return null;
-          })
-          .filter((item) => item !== null);
-
-        logger.info('addItem2List agent completed', {
-          hasFinalOutput: !!additem2listResultTemp.finalOutput,
-          finalOutput: additem2listResultTemp.finalOutput
-            ? String(additem2listResultTemp.finalOutput).substring(0, 200)
-            : null,
-          newItemsCount: newItems.length,
-          toolCallsCount: toolCalls.length,
-          toolCallDetails,
-        });
-
-        conversationHistory.push(...additem2listResultTemp.newItems.map((item) => item.rawItem));
-
-        if (!additem2listResultTemp.finalOutput) {
-          logger.warn('addItem2List agent returned no output', {
-            newItems: newItems.length,
-            toolCallsCount: toolCalls.length,
-          });
-          // If tools were called, assume success even without text output
-          if (toolCalls && toolCalls.length > 0) {
-            agentResult = {
-              output_text: "I've added the items to your list!",
-            };
-          } else {
-            throw new Error('Agent result is undefined and no tools were called');
-          }
-        } else {
-          agentResult = {
-            output_text: additem2listResultTemp.finalOutput || '',
-          };
-        }
-      } else if (classificationAgentResult.output_parsed.classification === 'remove_from_list') {
-        const removeItemResultTemp = await runner.run(removeItemAgent, [...conversationHistory], {
-          context: {
-            phoneNumber: state.phone_number,
-            userContext: isphonenumberauserResult.output_parsed.data,
-          },
-        });
-
-        conversationHistory.push(...removeItemResultTemp.newItems.map((item) => item.rawItem));
-
-        if (!removeItemResultTemp.finalOutput) {
-          throw new Error('Agent result is undefined');
-        }
-
-        agentResult = {
-          output_text: removeItemResultTemp.finalOutput || '',
-        };
-      } else if (classificationAgentResult.output_parsed.classification === 'show_list') {
-        const showListResultTemp = await runner.run(showListAgent, [...conversationHistory], {
-          context: {
-            phoneNumber: state.phone_number,
-            userContext: isphonenumberauserResult.output_parsed.data,
-          },
-        });
-
-        conversationHistory.push(...showListResultTemp.newItems.map((item) => item.rawItem));
-
-        if (!showListResultTemp.finalOutput) {
-          throw new Error('Agent result is undefined');
-        }
-
-        agentResult = {
-          output_text: showListResultTemp.finalOutput || '',
-        };
-      } else {
         return classificationAgentResult;
       }
 
+      logger.info('Processing multiple classifications', {
+        phoneNumber: state.phone_number,
+        classifications,
+        count: classifications.length,
+      });
+
+      // Execute each classification sequentially
+      const responses = [];
+      let currentConversationHistory = [...conversationHistory];
+
+      // eslint-disable-next-line no-plusplus
+      for (let i = 0; i < classifications.length; i += 1) {
+        const classification = classifications[i];
+        logger.info(`Executing classification ${i + 1}/${classifications.length}`, {
+          classification,
+          phoneNumber: state.phone_number,
+        });
+
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const agentResult = await executeAgentByClassification(
+            runner,
+            classification,
+            currentConversationHistory,
+            userContextData,
+            state.phone_number
+          );
+
+          responses.push(agentResult.output_text);
+          currentConversationHistory = agentResult.conversationHistory;
+        } catch (error) {
+          logger.error(`Error executing classification ${classification}:`, error);
+          // Continue with other classifications even if one fails
+          responses.push(`I encountered an error processing the ${classification} request.`);
+        }
+      }
+
+      // Combine all responses into a single message
+      // If there's only one response, use it as-is. Otherwise, combine them.
+      const combinedResponse = responses.length === 1 ? responses[0] : responses.filter((r) => r && r.trim()).join('\n\n');
+
       return {
         success: true,
-        classification: classificationAgentResult.output_parsed.classification,
-        response: agentResult.output_text,
+        classifications,
+        response: combinedResponse,
       };
     }
 

@@ -111,6 +111,22 @@ const acceptMembershipInvitation = async (token, userId) => {
   membership.expiration_date = undefined; // Remove expiration after acceptance
 
   await membership.save();
+
+  // If user's current active group is their personal group, set the invited group as active
+  const user = await User.findById(userId);
+  if (user && user.activeGroupId) {
+    const currentActiveGroup = await Group.findById(user.activeGroupId);
+    // If current active group is personal, switch to the invited group
+    if (currentActiveGroup && currentActiveGroup.isPersonal) {
+      user.activeGroupId = membership.group_id;
+      await user.save();
+    }
+  } else if (user && !user.activeGroupId) {
+    // If user has no active group, set the invited group as active
+    user.activeGroupId = membership.group_id;
+    await user.save();
+  }
+
   return membership;
 };
 

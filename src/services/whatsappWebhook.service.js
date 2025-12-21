@@ -1,13 +1,14 @@
-const { runWorkflow } = require('./whatsappAgent.service');
-const { sendWhatsAppMessage } = require('./messaging.service');
-const logger = require('../config/logger');
-const { fixPhoneNumber } = require('../utils/phoneNumbers');
 const axios = require('axios');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+// eslint-disable-next-line import/no-extraneous-dependencies
 const { OpenAI } = require('openai');
 const config = require('../config/config');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+const logger = require('../config/logger');
+const { fixPhoneNumber } = require('../utils/phoneNumbers');
+const { runWorkflow } = require('./whatsappAgent.service');
+const { sendWhatsAppMessage } = require('./messaging.service');
 /**
  * Download media file from Twilio
  * @param {string} mediaUrl - Twilio media URL
@@ -36,58 +37,6 @@ const downloadMediaFromTwilio = async (mediaUrl) => {
 };
 
 /**
- * Transcribe audio file using OpenAI Whisper API
- * @param {Buffer} audioBuffer - Audio file buffer
- * @param {string} contentType - MIME type of the audio file
- * @returns {Promise<string>} Transcribed text
- */
-const transcribeAudioWithOpenAI = async (audioBuffer, contentType) => {
-  try {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set');
-    }
-
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-    // Create a temporary file for the audio
-    const tempDir = os.tmpdir();
-    const tempFilePath = path.join(tempDir, `audio_${Date.now()}.${getFileExtension(contentType)}`);
-    
-    try {
-      // Write buffer to temp file
-      fs.writeFileSync(tempFilePath, audioBuffer);
-
-      // OpenAI SDK v4 for Node.js accepts file paths directly
-      // Pass the file path as a string - the SDK will handle reading it
-      const transcription = await openai.audio.transcriptions.create({
-        file: fs.createReadStream(tempFilePath),
-        model: 'whisper-1',
-        language: 'pt', // Portuguese for Brazil
-        response_format: 'text',
-      });
-
-      // Handle both string and object responses
-      // When response_format is 'text', it returns a string directly
-      const transcribedText = typeof transcription === 'string' ? transcription : transcription.text || String(transcription);
-      
-      return transcribedText;
-    } finally {
-      // Clean up temp file
-      if (fs.existsSync(tempFilePath)) {
-        try {
-          fs.unlinkSync(tempFilePath);
-        } catch (unlinkError) {
-          logger.warn('Failed to delete temp file:', unlinkError);
-        }
-      }
-    }
-  } catch (error) {
-    logger.error('Error transcribing audio with OpenAI:', error);
-    throw new Error(`Failed to transcribe audio: ${error.message}`);
-  }
-};
-
-/**
  * Get file extension from content type
  * @param {string} contentType - MIME type
  * @returns {string} File extension
@@ -103,27 +52,61 @@ const getFileExtension = (contentType) => {
     'audio/aac': 'aac',
     'audio/m4a': 'm4a',
   };
-  return extensions[contentType?.toLowerCase()] || 'ogg';
+  return extensions[contentType && typeof contentType === 'string' ? contentType.toLowerCase() : ''] || 'ogg';
 };
 
 /**
- * Get file format for OpenAI API
- * @param {string} contentType - MIME type
- * @returns {string} File format
+ * Transcribe audio file using OpenAI Whisper API
+ * @param {Buffer} audioBuffer - Audio file buffer
+ * @param {string} contentType - MIME type of the audio file
+ * @returns {Promise<string>} Transcribed text
  */
-const getFileFormat = (contentType) => {
-  // OpenAI Whisper accepts: mp3, mp4, mpeg, mpga, m4a, wav, webm
-  const formatMap = {
-    'audio/ogg': 'ogg',
-    'audio/oga': 'oga',
-    'audio/mpeg': 'mp3',
-    'audio/mp3': 'mp3',
-    'audio/wav': 'wav',
-    'audio/webm': 'webm',
-    'audio/aac': 'aac',
-    'audio/m4a': 'm4a',
-  };
-  return formatMap[contentType?.toLowerCase()] || 'ogg';
+const transcribeAudio = async (audioBuffer, contentType) => {
+  // Create a temporary file for the audio
+  const tempDir = os.tmpdir();
+  const tempFilePath = path.join(tempDir, `audio_${Date.now()}.${getFileExtension(contentType)}`);
+
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error('OPENAI_API_KEY is not set');
+    }
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // Write buffer to temp file
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    fs.writeFileSync(tempFilePath, audioBuffer);
+
+    // OpenAI SDK v4 for Node.js accepts file paths directly
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    const transcription = await openai.audio.transcriptions.create({
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      file: fs.createReadStream(tempFilePath),
+      model: 'whisper-1',
+      language: 'pt', // Portuguese for Brazil
+      response_format: 'text',
+    });
+
+    // Handle both string and object responses
+    // When response_format is 'text', it returns a string directly
+    const transcribedText = typeof transcription === 'string' ? transcription : transcription.text || String(transcription);
+
+    return transcribedText;
+  } catch (error) {
+    logger.error('Error transcribing audio with Whisper:', error);
+    throw new Error(`Failed to transcribe audio: ${error.message}`);
+  } finally {
+    // Clean up temp file
+    // eslint-disable-next-line security/detect-non-literal-fs-filename
+    if (fs.existsSync(tempFilePath)) {
+      try {
+        // eslint-disable-next-line security/detect-non-literal-fs-filename
+        fs.unlinkSync(tempFilePath);
+      } catch (unlinkError) {
+        logger.warn('Failed to delete temp file:', unlinkError);
+      }
+    }
+  }
 };
 
 /**
@@ -168,7 +151,7 @@ const processIncomingMessage = async (messageData) => {
 
       // Check if it's an audio file that can be transcribed
       const isAudio = contentType.startsWith('audio/');
-      
+
       if (isAudio) {
         try {
           logger.info('Processing audio media message', {
@@ -180,12 +163,12 @@ const processIncomingMessage = async (messageData) => {
           // Download the media file
           const audioBuffer = await downloadMediaFromTwilio(mediaUrl);
 
-          // Transcribe using OpenAI Whisper
-          const transcription = await transcribeAudioWithOpenAI(audioBuffer, contentType);
+          // Transcribe audio using OpenAI Whisper API
+          const transcription = await transcribeAudio(audioBuffer, contentType);
 
           // Use transcription as the message body
           messageBody = transcription.trim();
-          
+
           logger.info('Audio transcribed successfully', {
             phoneNumber,
             transcriptionLength: messageBody.length,
